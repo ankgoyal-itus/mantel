@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Written to ~/Library/LaunchAgents/com.mantel.photos.plist by
+     deploy/service.sh. Edit this template and re-run `make install-photos-service`
+     rather than the installed copy. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mantel.photos</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__REPO__/deploy/photos-sync.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+
+  <!-- Nightly, after the children are in bed and before the house is asleep:
+       anything added during the day is on the wall by breakfast. -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>21</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <!-- A sync is a one-shot job, not a service: it must not be restarted when
+       it exits, only run again at the next appointment. -->
+  <key>KeepAlive</key>
+  <false/>
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__LOGS__/photos.log</string>
+  <key>StandardErrorPath</key>
+  <string>__LOGS__/photos.log</string>
+</dict>
+</plist>

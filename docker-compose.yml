@@ -1,0 +1,22 @@
+# `make up` / `make down`. The image carries the API and the built kiosk;
+# the family's home/ (content, ledger, photos, caches) and the secrets stay
+# outside it.
+services:
+  mantel:
+    build: .
+    image: mantel:latest
+    container_name: mantel
+    ports:
+      - "8000:8000"
+    volumes:
+      # The API writes here: the ledger, its backups, photos and caches.
+      - ./home:/app/home
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      MANTEL_HOME: /app/home
+      # Bind mounts do not deliver file-change events on macOS or Windows, so
+      # the content watcher polls instead of missing every edit.
+      WATCHFILES_FORCE_POLLING: "1"
+    restart: unless-stopped

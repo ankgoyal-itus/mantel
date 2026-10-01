@@ -1,0 +1,589 @@
+{
+  "$defs": {
+    "Allowance": {
+      "additionalProperties": false,
+      "description": "Pocket money paid by hand; Mantel only remembers to ask.",
+      "properties": {
+        "amount_note": {
+          "default": "set in settings",
+          "title": "Amount Note",
+          "type": "string"
+        },
+        "reminder_hour": {
+          "default": 18,
+          "maximum": 23,
+          "minimum": 0,
+          "title": "Reminder Hour",
+          "type": "integer"
+        }
+      },
+      "title": "Allowance",
+      "type": "object"
+    },
+    "CalendarFeed": {
+      "additionalProperties": false,
+      "description": "One ICS feed.\n\nA private calendar names an environment variable, because its URL is a\npassword. A public one carries the URL itself: a holiday calendar or a\nschool district's feed is nobody's secret, and keeping it in settings.yaml\nmeans the feed list is reviewable in the repo.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kid"
+        },
+        "kind": {
+          "enum": [
+            "kid",
+            "family",
+            "holiday",
+            "festival",
+            "school"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "url_env": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url Env"
+        }
+      },
+      "required": [
+        "id",
+        "kind"
+      ],
+      "title": "CalendarFeed",
+      "type": "object"
+    },
+    "DateException": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date"
+      ],
+      "title": "DateException",
+      "type": "object"
+    },
+    "DateRange": {
+      "additionalProperties": false,
+      "description": "An inclusive span of days, written `from`/`to` in YAML.\n\n\"from\" is a keyword, so the YAML spelling lives in the alias. Responses\nuse the alias too, so the kiosk sees the same shape as the file.",
+      "properties": {
+        "from": {
+          "format": "date",
+          "title": "From",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "to": {
+          "format": "date",
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "name"
+      ],
+      "title": "DateRange",
+      "type": "object"
+    },
+    "Diet": {
+      "additionalProperties": false,
+      "description": "Who eats what, and the rules that decide when the house is vegetarian.\n\nNo dates here: every blocked day is computed from the festival feeds by\nthe diet service, so a calendar that moves with the moon stays right\nwithout anyone editing this file.",
+      "properties": {
+        "no_non_veg_dates_extra": {
+          "items": {
+            "$ref": "#/$defs/DateRange"
+          },
+          "title": "No Non Veg Dates Extra",
+          "type": "array"
+        },
+        "no_non_veg_festivals": {
+          "items": {
+            "$ref": "#/$defs/FestivalRule"
+          },
+          "title": "No Non Veg Festivals",
+          "type": "array"
+        },
+        "non_veg_days": {
+          "items": {
+            "enum": [
+              "mon",
+              "tue",
+              "wed",
+              "thu",
+              "fri",
+              "sat",
+              "sun"
+            ],
+            "type": "string"
+          },
+          "title": "Non Veg Days",
+          "type": "array"
+        },
+        "non_veg_ok": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Non Veg Ok",
+          "type": "array"
+        },
+        "non_veg_ok_dates": {
+          "items": {
+            "$ref": "#/$defs/DateException"
+          },
+          "title": "Non Veg Ok Dates",
+          "type": "array"
+        },
+        "vegetarian": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Vegetarian",
+          "type": "array"
+        }
+      },
+      "title": "Diet",
+      "type": "object"
+    },
+    "Family": {
+      "additionalProperties": false,
+      "properties": {
+        "kids": {
+          "items": {
+            "$ref": "#/$defs/Kid"
+          },
+          "title": "Kids",
+          "type": "array"
+        },
+        "parents": {
+          "items": {
+            "$ref": "#/$defs/Parent"
+          },
+          "title": "Parents",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kids",
+        "parents"
+      ],
+      "title": "Family",
+      "type": "object"
+    },
+    "Feelings": {
+      "additionalProperties": false,
+      "description": "The bedtime check-in, off until somebody decides they want it.\n\nDeliberately the smallest thing that could work: five faces, one tap, on\nthe night screen only, and nothing anywhere ever asks for it again. No\nstreak, no reminder, no empty day showing as a gap. What a child felt\nabout a Tuesday is for the people in the house, so it is shown in the\nweekly digest and on no screen a visitor might see.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "title": "Feelings",
+      "type": "object"
+    },
+    "FestivalRule": {
+      "additionalProperties": false,
+      "description": "Match an observance by name; block that day and the ones after it.",
+      "properties": {
+        "match": {
+          "title": "Match",
+          "type": "string"
+        },
+        "span_days": {
+          "default": 1,
+          "maximum": 31,
+          "minimum": 1,
+          "title": "Span Days",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "match"
+      ],
+      "title": "FestivalRule",
+      "type": "object"
+    },
+    "FrameChip": {
+      "additionalProperties": false,
+      "description": "The clock and weather over the photo frame: on unless turned off, and\na size for the far side of the room (large is 1.25 times regular).",
+      "properties": {
+        "chip": {
+          "default": true,
+          "title": "Chip",
+          "type": "boolean"
+        },
+        "size": {
+          "default": "regular",
+          "enum": [
+            "regular",
+            "large"
+          ],
+          "title": "Size",
+          "type": "string"
+        }
+      },
+      "title": "FrameChip",
+      "type": "object"
+    },
+    "Kid": {
+      "additionalProperties": false,
+      "properties": {
+        "avatar": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Avatar"
+        },
+        "birthday": {
+          "anyOf": [
+            {
+              "pattern": "^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Birthday"
+        },
+        "color": {
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "title": "Color",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "color"
+      ],
+      "title": "Kid",
+      "type": "object"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "properties": {
+        "lat": {
+          "title": "Lat",
+          "type": "number"
+        },
+        "lon": {
+          "title": "Lon",
+          "type": "number"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "lat",
+        "lon"
+      ],
+      "title": "Location",
+      "type": "object"
+    },
+    "Night": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+          "title": "End",
+          "type": "string"
+        },
+        "frame": {
+          "title": "Frame",
+          "type": "boolean"
+        },
+        "idle_minutes": {
+          "title": "Idle Minutes",
+          "type": "integer"
+        },
+        "start": {
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "idle_minutes",
+        "frame"
+      ],
+      "title": "Night",
+      "type": "object"
+    },
+    "Panchang": {
+      "additionalProperties": false,
+      "description": "How the almanac is presented. The maths does not vary; the naming does.",
+      "properties": {
+        "masa_scheme": {
+          "default": "purnimanta",
+          "enum": [
+            "purnimanta",
+            "amanta"
+          ],
+          "title": "Masa Scheme",
+          "type": "string"
+        },
+        "show_yoga_karana": {
+          "default": false,
+          "title": "Show Yoga Karana",
+          "type": "boolean"
+        }
+      },
+      "title": "Panchang",
+      "type": "object"
+    },
+    "Parent": {
+      "additionalProperties": false,
+      "properties": {
+        "birthday": {
+          "anyOf": [
+            {
+              "pattern": "^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Birthday"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Parent",
+      "type": "object"
+    },
+    "Points": {
+      "additionalProperties": false,
+      "description": "How points behave. Every number the house might want to argue about.",
+      "properties": {
+        "deductions": {
+          "default": false,
+          "title": "Deductions",
+          "type": "boolean"
+        },
+        "parent_idle_minutes": {
+          "default": 2,
+          "maximum": 60,
+          "minimum": 1,
+          "title": "Parent Idle Minutes",
+          "type": "integer"
+        },
+        "roblox_per_week": {
+          "default": 2,
+          "minimum": 0,
+          "title": "Roblox Per Week",
+          "type": "integer"
+        },
+        "streak_bonus": {
+          "default": 20,
+          "minimum": 0,
+          "title": "Streak Bonus",
+          "type": "integer"
+        },
+        "streak_days": {
+          "default": 7,
+          "maximum": 31,
+          "minimum": 1,
+          "title": "Streak Days",
+          "type": "integer"
+        }
+      },
+      "title": "Points",
+      "type": "object"
+    },
+    "Settings": {
+      "additionalProperties": false,
+      "properties": {
+        "allowance": {
+          "$ref": "#/$defs/Allowance"
+        },
+        "calendars": {
+          "items": {
+            "$ref": "#/$defs/CalendarFeed"
+          },
+          "title": "Calendars",
+          "type": "array"
+        },
+        "daily_reload": {
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+          "title": "Daily Reload",
+          "type": "string"
+        },
+        "diet": {
+          "$ref": "#/$defs/Diet"
+        },
+        "feelings": {
+          "$ref": "#/$defs/Feelings"
+        },
+        "frame": {
+          "$ref": "#/$defs/FrameChip"
+        },
+        "idle_minutes": {
+          "title": "Idle Minutes",
+          "type": "integer"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        },
+        "night": {
+          "$ref": "#/$defs/Night"
+        },
+        "panchang": {
+          "$ref": "#/$defs/Panchang"
+        },
+        "points": {
+          "$ref": "#/$defs/Points"
+        },
+        "refresh_minutes": {
+          "title": "Refresh Minutes",
+          "type": "integer"
+        },
+        "slide_seconds": {
+          "title": "Slide Seconds",
+          "type": "integer"
+        },
+        "timezone": {
+          "title": "Timezone",
+          "type": "string"
+        },
+        "units": {
+          "$ref": "#/$defs/Units"
+        }
+      },
+      "required": [
+        "timezone",
+        "location",
+        "units",
+        "night",
+        "idle_minutes",
+        "slide_seconds",
+        "refresh_minutes",
+        "daily_reload"
+      ],
+      "title": "Settings",
+      "type": "object"
+    },
+    "Units": {
+      "additionalProperties": false,
+      "properties": {
+        "temp": {
+          "enum": [
+            "F",
+            "C"
+          ],
+          "title": "Temp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "temp"
+      ],
+      "title": "Units",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "family": {
+      "$ref": "#/$defs/Family"
+    },
+    "settings": {
+      "$ref": "#/$defs/Settings"
+    }
+  },
+  "required": [
+    "family",
+    "settings"
+  ],
+  "title": "Config",
+  "type": "object"
+}

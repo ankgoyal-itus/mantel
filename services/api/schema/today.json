@@ -1,0 +1,659 @@
+{
+  "$defs": {
+    "AgendaEntry": {
+      "properties": {
+        "all_day": {
+          "default": false,
+          "title": "All Day",
+          "type": "boolean"
+        },
+        "calendar_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calendar Id"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "source_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Kind"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "where": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Where"
+        }
+      },
+      "required": [
+        "title",
+        "source"
+      ],
+      "title": "AgendaEntry",
+      "type": "object"
+    },
+    "DayDiet": {
+      "description": "Whether the kids may eat meat, and why not when they may not.",
+      "properties": {
+        "non_veg_ok": {
+          "default": true,
+          "title": "Non Veg Ok",
+          "type": "boolean"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "title": "DayDiet",
+      "type": "object"
+    },
+    "DayMeals": {
+      "additionalProperties": false,
+      "properties": {
+        "breakfast": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MealSlot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dinner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MealSlot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "lunch": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MealSlot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "snack": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MealSlot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "DayMeals",
+      "type": "object"
+    },
+    "KidDay": {
+      "properties": {
+        "agenda": {
+          "items": {
+            "$ref": "#/$defs/AgendaEntry"
+          },
+          "title": "Agenda",
+          "type": "array"
+        },
+        "avatar": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Avatar"
+        },
+        "birthday": {
+          "default": false,
+          "title": "Birthday",
+          "type": "boolean"
+        },
+        "color": {
+          "title": "Color",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/TaskEntry"
+          },
+          "title": "Tasks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "color",
+        "agenda",
+        "tasks"
+      ],
+      "title": "KidDay",
+      "type": "object"
+    },
+    "MealSlot": {
+      "additionalProperties": false,
+      "properties": {
+        "confirmed": {
+          "default": true,
+          "title": "Confirmed",
+          "type": "boolean"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "kids_protein": {
+          "default": "veg",
+          "enum": [
+            "veg",
+            "egg",
+            "chicken",
+            "fish"
+          ],
+          "title": "Kids Protein",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "picked_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Picked By",
+          "type": "array"
+        },
+        "picks": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PickChoice"
+          },
+          "title": "Picks",
+          "type": "object"
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plan"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "MealSlot",
+      "type": "object"
+    },
+    "Observance": {
+      "description": "A holiday or festival falling on a day. Not an appointment.",
+      "properties": {
+        "calendar_id": {
+          "title": "Calendar Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "kid",
+            "family",
+            "holiday",
+            "festival",
+            "school"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "calendar_id"
+      ],
+      "title": "Observance",
+      "type": "object"
+    },
+    "PickChoice": {
+      "additionalProperties": false,
+      "description": "One child's choice for a slot, while it is still a proposal.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kids_protein": {
+          "default": "veg",
+          "enum": [
+            "veg",
+            "egg",
+            "chicken",
+            "fish"
+          ],
+          "title": "Kids Protein",
+          "type": "string"
+        },
+        "reward": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "PickChoice",
+      "type": "object"
+    },
+    "TaskEntry": {
+      "properties": {
+        "claim": {
+          "default": "kid",
+          "enum": [
+            "kid",
+            "parent"
+          ],
+          "title": "Claim",
+          "type": "string"
+        },
+        "claim_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Claim Id"
+        },
+        "every": {
+          "default": "day",
+          "enum": [
+            "day",
+            "week"
+          ],
+          "title": "Every",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "points": {
+          "default": 0,
+          "title": "Points",
+          "type": "integer"
+        },
+        "routine": {
+          "default": "afternoon",
+          "enum": [
+            "morning",
+            "afternoon",
+            "evening"
+          ],
+          "title": "Routine",
+          "type": "string"
+        },
+        "status": {
+          "default": "none",
+          "enum": [
+            "none",
+            "claimed",
+            "approved",
+            "declined"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title"
+      ],
+      "title": "TaskEntry",
+      "type": "object"
+    },
+    "Weather": {
+      "description": "Empty and stale until the first fetch succeeds; never an error.",
+      "properties": {
+        "fetched_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fetched At"
+        },
+        "now": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WeatherNow"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "stale": {
+          "default": true,
+          "title": "Stale",
+          "type": "boolean"
+        },
+        "today": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WeatherDay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tomorrow": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WeatherDay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Weather",
+      "type": "object"
+    },
+    "WeatherDay": {
+      "properties": {
+        "high": {
+          "title": "High",
+          "type": "number"
+        },
+        "icon": {
+          "title": "Icon",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "low": {
+          "title": "Low",
+          "type": "number"
+        },
+        "precip_pct": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Precip Pct"
+        },
+        "sunrise": {
+          "title": "Sunrise",
+          "type": "string"
+        },
+        "sunset": {
+          "title": "Sunset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "high",
+        "low",
+        "sunrise",
+        "sunset",
+        "label",
+        "icon"
+      ],
+      "title": "WeatherDay",
+      "type": "object"
+    },
+    "WeatherNow": {
+      "properties": {
+        "icon": {
+          "title": "Icon",
+          "type": "string"
+        },
+        "is_day": {
+          "title": "Is Day",
+          "type": "boolean"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "temp": {
+          "title": "Temp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "temp",
+        "label",
+        "icon",
+        "is_day"
+      ],
+      "title": "WeatherNow",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "date": {
+      "format": "date",
+      "title": "Date",
+      "type": "string"
+    },
+    "diet": {
+      "$ref": "#/$defs/DayDiet"
+    },
+    "family_agenda": {
+      "items": {
+        "$ref": "#/$defs/AgendaEntry"
+      },
+      "title": "Family Agenda",
+      "type": "array"
+    },
+    "is_school_day": {
+      "title": "Is School Day",
+      "type": "boolean"
+    },
+    "kids": {
+      "items": {
+        "$ref": "#/$defs/KidDay"
+      },
+      "title": "Kids",
+      "type": "array"
+    },
+    "meals": {
+      "$ref": "#/$defs/DayMeals"
+    },
+    "observances": {
+      "items": {
+        "$ref": "#/$defs/Observance"
+      },
+      "title": "Observances",
+      "type": "array"
+    },
+    "school_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "School Note"
+    },
+    "weather": {
+      "$ref": "#/$defs/Weather"
+    },
+    "weekday": {
+      "enum": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun"
+      ],
+      "title": "Weekday",
+      "type": "string"
+    }
+  },
+  "required": [
+    "date",
+    "weekday",
+    "is_school_day",
+    "school_note",
+    "kids",
+    "family_agenda",
+    "meals"
+  ],
+  "title": "Day",
+  "type": "object"
+}

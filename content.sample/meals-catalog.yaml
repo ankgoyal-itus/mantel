@@ -1,0 +1,21 @@
+# Dish catalog. protein lists every way a dish is cooked; veg is always the
+# parents' way. two_ways says how the kids' version differs on the days they
+# eat meat. Lunch out and Dinner out are built in and need no line here.
+version: 1
+dishes:
+  # breakfast
+  - {id: pancakes, name: Pancakes, slot: breakfast, protein: [veg], cuisine: western, minutes: 20, weekend: true}
+  - {id: oatmeal, name: Oatmeal with fruit, slot: breakfast, protein: [veg], cuisine: western, minutes: 10}
+  - {id: idli_sambar, name: Idli and sambar, slot: breakfast, protein: [veg], cuisine: south_indian, minutes: 30, weekend: true}
+  - {id: veggie_omelette, name: Veggie omelette, slot: breakfast, protein: [veg, egg], cuisine: western, minutes: 15, two_ways: "eggs for the kids, a chickpea scramble for the parents"}
+  # lunch
+  - {id: quesadilla, name: Quesadilla, slot: lunch, protein: [veg, chicken], cuisine: mexican, minutes: 20, lunchbox: true, two_ways: "bean and cheese; chicken for the kids on their days"}
+  - {id: pesto_pasta, name: Pesto pasta, slot: lunch, protein: [veg], cuisine: italian, minutes: 20, lunchbox: true}
+  - {id: dal_rice, name: Dal and rice, slot: lunch, protein: [veg], cuisine: indian, minutes: 30, lunchbox: true}
+  - {id: grilled_cheese, name: Grilled cheese, slot: lunch, protein: [veg], cuisine: western, minutes: 15, lunchbox: true, treat: true}
+  # dinner
+  - {id: paneer_tikka, name: Paneer tikka, slot: dinner, protein: [veg, chicken], cuisine: indian, minutes: 45, two_ways: "paneer for the parents; chicken tikka for the kids on their days"}
+  - {id: veggie_stir_fry, name: Veggie stir-fry, slot: dinner, protein: [veg, chicken], cuisine: asian, minutes: 25, two_ways: "tofu for the parents; chicken for the kids on their days"}
+  - {id: tacos, name: Tacos, slot: dinner, protein: [veg, chicken], cuisine: mexican, minutes: 30, two_ways: "black bean; chicken for the kids on their days"}
+  - {id: pizza_night, name: Pizza night, slot: dinner, protein: [veg], cuisine: italian, minutes: 40, treat: true}
+  - {id: khichdi, name: Khichdi, slot: dinner, protein: [veg], cuisine: indian, minutes: 30}

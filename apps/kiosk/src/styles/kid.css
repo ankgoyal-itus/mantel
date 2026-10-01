@@ -1,0 +1,994 @@
+/* Kid mode: one child's card, opened by tapping their face on the dashboard.
+   Their colour bands the top, and the other child shrinks to a rail rather
+   than disappearing — the dashboard is shared, and a card that vanishes
+   reads as a card that was taken away. */
+
+.kid-mode {
+  display: flex;
+  flex-direction: column;
+  padding: var(--gap) var(--pad) var(--unit);
+}
+
+.kid-mode-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--tap);
+  margin-bottom: var(--gap);
+  padding: var(--unit) var(--gap);
+  border-radius: var(--r-card);
+  background: var(--kid-tint);
+}
+
+.kid-mode-name {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  color: var(--kid-ink);
+}
+
+/* A text button, not a card.
+
+   Done was a filled tile the same size as the two things a child came here to
+   do, and on the light theme a third white rectangle in the band is one too
+   many. The way out of a screen does not need to compete with what is on it;
+   it needs to be findable and 44px, which a word in the muted ink is. */
+.kid-done {
+  min-width: 120px;
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 0;
+  border-radius: var(--r-card);
+  background: transparent;
+  /* The page's ink: --muted on the kid's tinted band is under 4.5:1. */
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+.kid-mode-body {
+  flex: 1;
+  display: flex;
+  gap: var(--gap);
+  min-height: 0;
+}
+
+/* Two thirds to the child whose card this is. */
+.kid-mode-main {
+  flex: 2;
+  min-width: 0;
+  display: flex;
+}
+
+.kid-mode-rail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.kid-mode-main .kid,
+.kid-mode-rail .kid {
+  flex: 1;
+}
+
+/* The rail is a reminder that the other card is still there, not a second
+   dashboard: the name, the face and the balance, at a glance. */
+.kid-mode-rail .kid-name {
+  font-family: var(--display);
+  font-size: var(--t-heading);
+}
+
+.kid-mode-rail .balance {
+  font-family: var(--display);
+  font-size: var(--t-heading);
+}
+
+/* The rail's rows carry a start time only, so the column is sized for one. */
+.kid-compact .row-time {
+  width: 110px;
+}
+
+.kid-compact .row-where,
+.kid-compact .row-glyph {
+  display: none;
+}
+
+/* In kid mode a to-do row is a button, and has to look like one before it is
+   pressed. A raised surface rather than a new colour: the fill that follows
+   the tap is what carries the kid's colour. */
+
+@keyframes task-wash {
+  from {
+    background: var(--kid-tint);
+  }
+}
+
+/* -- the shop -------------------------------------------------------------
+   Every reward is shown, including the ones out of reach: a reward a child
+   cannot see is one they cannot save towards. What changes is how solid the
+   card looks. */
+
+.shop {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* One row, and it stays one row. At 1024 the heading wrapped to two lines
+   and the toggle wrapped under it, which put 90px between the title of the
+   shop and the first thing in it. */
+.shop-bar {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+  margin-bottom: var(--unit);
+}
+
+/* 24, not 28: "What your points can be" is five words and the heading is not
+   the thing being read here. */
+.shop-title {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: var(--weight-display);
+  color: var(--kid-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The line that says what a child is looking at and what to do about it.
+   Two numbers off their own screen: the cheapest chore and the cheapest
+   reward, so the distance between an empty balance and an ice cream is
+   arithmetic rather than a feeling. */
+.shop-nudge {
+  margin: 0 0 var(--unit);
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* Fixed rows rather than rows that stretch: the grid is one thing on this
+   card and the list of what was asked for is another, and the grid taking
+   whatever is left is what pushed the list off the bottom. */
+.shop-grid {
+  display: grid;
+  /* Three across, not four: at four the cards are 150px wide and "Pick
+     tomorrow's dinner" loses the word that matters. */
+  grid-template-columns: repeat(3, 1fr);
+  /* Tall enough for the worst tile it has to hold: the glyph, two lines of
+     name, the price and the shortfall under it. It was 148 flat, and "Pick
+     breakfast or lunch" — two lines — pushed its own price out of the tile.
+     A minmax rather than a fixed row, so a longer name costs a few pixels
+     rather than its price. */
+  grid-auto-rows: minmax(152px, auto);
+  gap: var(--gap);
+}
+
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Three rows of these, the heading and the list of what was asked for all
+     have to fit the card without scrolling. */
+  padding: var(--unit);
+  min-height: 152px;
+  border: var(--card-border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+  color: var(--fg);
+  font-family: var(--body);
+  text-align: center;
+}
+
+/* Out of reach, or already asked for. This was 40% opacity, which on paper
+   takes the name to 2.5:1 — a reward a child cannot read is not a reward
+   they can save towards, which is the whole argument for showing it. So the
+   card steps back by losing its surface and its ink rather than its
+   legibility: no fill, no lift, everything in the muted grey. */
+.shop-card-dim {
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+
+.shop-card-dim .shop-glyph,
+.shop-card-dim .shop-cost {
+  color: var(--muted);
+}
+
+.shop-glyph {
+  color: var(--kid-ink);
+  margin-bottom: 4px;
+  flex: none;
+}
+
+/* Two lines at most. "Pick tomorrow's dinner" is the longest of them, and a
+   third line would cost the card its price. */
+.shop-name {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 24px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shop-cost {
+  margin-top: 4px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: var(--weight-display);
+  color: var(--kid-ink);
+}
+
+.shop-state {
+  margin-top: 4px;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* On one of the three a child is nearest, the shortfall is the point of the
+   tile rather than the reason it is greyed out, so it is said in their own
+   colour and at full strength. */
+.shop-state-goal {
+  color: var(--kid-ink);
+  font-weight: 700;
+}
+
+.shop-heading {
+  margin: var(--gap) 0 4px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.shop-mine {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shop-mine-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  min-height: var(--tap);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.shop-mine-glyph {
+  color: var(--kid-ink);
+  flex: none;
+}
+
+.shop-mine-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-mine-state {
+  flex: none;
+  font-weight: 700;
+}
+
+.shop-mine-when {
+  flex: none;
+  width: 80px;
+  text-align: right;
+  color: var(--muted);
+}
+
+.shop-note {
+  margin: var(--unit) 0 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* -- asking for it -------------------------------------------------------- */
+
+.confirm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scrim);
+}
+
+.confirm-card {
+  width: 560px;
+  max-width: 80%;
+  padding: var(--pad);
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-float);
+  text-align: center;
+}
+
+.confirm-question {
+  margin: 0 0 var(--gap);
+  font-family: var(--display);
+  font-size: var(--t-title);
+  line-height: 1.25;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--gap);
+}
+
+/* The two things a card can do besides its rows. */
+.kid-actions {
+  display: flex;
+  gap: var(--gap);
+  margin-top: auto;
+  padding-top: var(--gap);
+}
+
+.kid-action {
+  flex: 1;
+  min-height: var(--tap);
+  border: 1px solid color-mix(in srgb, var(--kid) 45%, transparent);
+  border-radius: var(--r-card);
+  background: var(--kid-tint);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+}
+
+/* -- the meal picker ------------------------------------------------------
+   Everything here is a real choice. The ones that are not say why, in terms
+   a child can argue with — which a greyed-out card is not. */
+
+.picker {
+  margin: var(--unit) 0 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  min-height: var(--row);
+  border-bottom: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+.pick-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick-treat {
+  flex: none;
+  color: var(--ink-festival);
+}
+
+.pick-ways {
+  flex: none;
+  display: flex;
+  gap: var(--unit);
+}
+
+.pick-why {
+  flex: none;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.pick-out .pick-name {
+  color: var(--muted);
+}
+
+/* The shop opens on what a child can have. An affordable tile is lit — the
+   kid's tint behind it and the glyph large enough to read across the room —
+   and everything else steps back to a shortfall and a smaller glyph, so the
+   eye sorts the grid before the words do. */
+
+.shop-card-open {
+  background: var(--kid-tint, var(--card));
+  border-color: transparent;
+}
+
+.shop-card-dim {
+  opacity: 0.4;
+}
+
+/* Not dimmed, and not tappable either: a target. */
+.shop-card-goal {
+  opacity: 1;
+}
+
+.shop-state-glyph {
+  color: var(--muted);
+}
+
+/* A text link, not a pill: it sits beside the heading on one line and never
+   wraps, because "Show what I can get" broken over two lines beside a
+   two-line heading was most of what the top of this screen was. The 44px
+   target is kept as padding around the words rather than as a shape. */
+.shop-toggle {
+  flex: none;
+  margin-left: auto;
+  min-height: var(--tap);
+  padding: 0 var(--unit);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+/* The picker: one tap takes the dish as it comes.
+   Veg had a button of its own on every row, which made the common case the
+   same weight as the rare one and gave each row two or three targets. Now the
+   row is the tap and the other ways to cook it are chips beside it. */
+
+.pick-tap {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: var(--row);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+}
+
+/* Said once under the slot chips, rather than on all five faded rows. */
+.pick-recent {
+  margin: 0 0 var(--unit) 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+/* The two fast tiles above the picker.
+
+   Thirty dinners is a list to read; "the same as yesterday" and "you choose"
+   are the two answers a child gives most often, and neither of them needs the
+   list at all. They sit above it rather than in it because they are not
+   dishes — picking one is answering the question a different way. */
+.fast {
+  display: flex;
+  gap: var(--gap);
+  margin: var(--unit) 0 var(--unit);
+}
+
+.fast-tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-height: 72px;
+  padding: var(--unit) var(--gap);
+  border: 1px solid color-mix(in srgb, var(--kid) 45%, transparent);
+  border-radius: var(--r-card);
+  background: var(--kid-tint);
+  color: var(--fg);
+  font-family: var(--body);
+  text-align: left;
+}
+
+.fast-tile:disabled {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+
+.fast-glyph {
+  color: var(--kid-ink);
+}
+
+.fast-name {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+}
+
+.fast-what {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The star that marks a reward as one of the two a kid is saving for.
+
+   Its own target on the corner of the tile rather than part of asking for it:
+   starring asks nobody, costs nothing and undoes with a second tap, and a
+   child should never worry that touching it has spent their points. */
+.shop-tile {
+  position: relative;
+  display: flex;
+}
+
+.shop-tile .shop-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-star {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--line);
+}
+
+.shop-star-on {
+  color: var(--ink-festival);
+}
+
+/* The shop and the picker open with the same 250ms slide the month panel
+   uses: one way things open, everywhere. */
+.shop {
+  animation: mo-panel-in 250ms ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop {
+    animation: none;
+  }
+}
+
+/* The picker's list is thirty dinners and the card holds eight of them.
+
+   It scrolled with no cue at all, so the last visible row read as the end of
+   the list. Two things fix that and neither is a scrollbar: a count above it
+   saying how many there are, and a fade at the bottom edge saying which way
+   the rest is. The fade is a mask rather than a gradient overlay, so it works
+   over whatever the card's colour happens to be. */
+.pick-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap);
+  margin-top: var(--unit);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.pick-count {
+  flex: none;
+  font-weight: 700;
+}
+
+.pick-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent 100%);
+}
+
+/* The list inside it no longer clips its own overflow: the scroller does. */
+.pick-scroll .picker {
+  overflow: visible;
+}
+
+/* Two things a child does daily, as tiles with a glyph on each. */
+.kid-action-glyph {
+  margin-right: var(--unit);
+  color: var(--kid-ink);
+  vertical-align: -6px;
+}
+
+/* Cash saved, on the line under the balance. */
+.balance-under {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap);
+}
+
+.cash-saved {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--ink-good);
+}
+
+/* The jar: the one they do rarely, so the small button at the end of the
+   row rather than a third tile the size of the other two. */
+.jar-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 1px solid color-mix(in srgb, var(--fg) 16%, transparent);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  white-space: nowrap;
+}
+
+.jar-button .kid-action-glyph {
+  color: var(--muted);
+  vertical-align: 0;
+}
+
+/* -- this week -------------------------------------------------------------
+   Seven columns, Monday to Sunday, under the routines: a bar a day for what
+   was earned (60px at most, in their colour) and the total beside the title. */
+
+.this-week {
+  flex: none;
+  margin-top: var(--unit);
+}
+
+.this-week-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.this-week-total {
+  color: var(--ink-good);
+  font-weight: 700;
+}
+
+.this-week-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--unit);
+}
+
+.tw-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tw-track {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 60px;
+  border-bottom: 2px solid var(--line);
+}
+
+.tw-bar {
+  display: block;
+  width: min(28px, 60%);
+  border-radius: 6px 6px 0 0;
+  background: var(--kid);
+}
+
+.tw-letter {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  line-height: 22px;
+  color: var(--muted);
+}
+
+.tw-today .tw-letter {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+/* Cuisine headers in the picker.
+   Thirty dinners scroll past the fold, and a list with no landmarks is a list
+   you lose your place in. The header sticks to the top of the scroller while
+   its own run is on screen, so the answer to "where am I" is always visible. */
+
+.pick-group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--unit) 0 4px 0;
+  background: var(--card);
+  color: var(--muted);
+  /* 20px is the floor for anything a child reads, and the suite enforces it. */
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  list-style: none;
+}
+
+/* A word about a dish that is still a choice: "we had this Tuesday". */
+.pick-warn {
+  margin-right: var(--unit);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+/* The week of meals: the whole screen, the other child's rail stepping aside. */
+.kid-mode-wide .kid-mode-rail {
+  display: none;
+}
+
+/* -- the week of meals -----------------------------------------------------
+   Seven days from today, three meals each. Every cell is a 44px+ button; a
+   uniform height, so a contested cell's "Mom or Dad picks" costs no row. */
+
+.week-strip {
+  display: grid;
+  grid-template-columns: var(--col-week-label) repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.week-labels,
+.week-day {
+  display: grid;
+  grid-template-rows: 32px repeat(3, 112px);
+  gap: 6px;
+}
+
+.week-label {
+  display: flex;
+  align-items: center;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.week-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.week-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 6px var(--unit);
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-align: left;
+  overflow: hidden;
+}
+
+.week-what {
+  /* Two lines at the caption size: "Makhani night" whole in a 100px cell. */
+  max-width: 100%;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  line-height: 18px;
+}
+
+/* Their own pick, in their colour: the ink form, which reads on paper. */
+.week-cell-mine .week-what {
+  color: var(--kid-ink);
+  font-weight: 700;
+}
+
+.week-marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.week-other {
+  display: inline-flex;
+}
+
+.week-lock {
+  color: var(--muted);
+}
+
+/* Two children, two dishes: the festival colour as a ring, as everywhere. */
+.week-cell-contested {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--festival);
+}
+
+.week-caption {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 22px;
+  color: var(--fg);
+}
+
+/* Locked says so with its glyph, not a grey wash: a wash under --muted
+   text took it to 4.47:1, under the floor. */
+
+/* A cell just filled: its own colour washes through it once, 300ms, and
+   settles. The only motion the picker has. */
+.week-cell-fresh {
+  animation: pick-tint 300ms ease-out 1;
+}
+
+@keyframes pick-tint {
+  from {
+    background: color-mix(in srgb, var(--kid) 30%, var(--card));
+  }
+  to {
+    background: var(--card);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .week-cell-fresh {
+    animation: none;
+  }
+}
+
+/* Dinner out: a treat, so it wears the festival's tint rather than the
+   kid's, and says who decides. */
+.fast-tile-out {
+  border-color: color-mix(in srgb, var(--festival) 55%, transparent);
+  background: var(--tint-festival);
+}
+
+.out-ask {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+  margin-bottom: var(--unit);
+}
+
+.out-ask .place-field {
+  flex: 1;
+}
+
+.out-ask-go {
+  flex: none;
+  min-width: 120px;
+}
+
+/* -- where: the place field, on the kid's picker and the parent's sheet -- */
+
+.place-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit);
+}
+
+.place-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit);
+}
+
+.place-chip {
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 1px solid color-mix(in srgb, var(--fg) 24%, transparent);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.place-chip-on {
+  border-color: transparent;
+  background: var(--tint-festival);
+  font-weight: 700;
+}
+
+.place-label {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.place-input {
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 1px solid color-mix(in srgb, var(--fg) 24%, transparent);
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* On the festival tint --muted is 4.49:1; the words take the page's ink,
+   the same rule as a pill: the tint carries, the ink writes. */
+.fast-tile-out .fast-what {
+  color: var(--fg);
+}
+
+.fast-tile-out .fast-glyph {
+  color: var(--festival);
+}
+
+/* On the open card's kid tint the cost takes the page's ink. */
+.shop-card-open .shop-cost {
+  color: var(--fg);
+}
+
+/* The tap itself: a chip washes with the kid's tint for 300ms as the claim
+   lands, and settles to the claimed shade. */
+/* The chip a kid tapped on the wall, once, as their card opens: 300ms of
+   their tint, so they know where they were. */
+@keyframes chip-pulse {
+  from {
+    background: var(--kid-tint);
+    box-shadow: inset 0 0 0 2px var(--kid);
+  }
+}
+
+.kid-mode-main .chip-task-pulse {
+  animation: chip-pulse 300ms ease-out 1;
+}
+
+/* For the five seconds a claim can be taken back, the worth says how. */
+.chip-task-undoing .chip-task-worth {
+  color: var(--kid-chip-ink);
+}
+
+.kid-mode-main .chip-task-claimed {
+  animation: task-wash 300ms ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kid-mode-main .chip-task-claimed,
+  .kid-mode-main .chip-task-pulse {
+    animation: none;
+  }
+}

@@ -1,0 +1,315 @@
+/* The whole palette and every measurement in the app.
+   Nothing outside this file defines a colour or a size step.
+
+   The rules the tokens below exist to keep:
+
+   - Colour. On DAY, KID and the picker the kids' colours are the only
+     accents. A filled colour pill means a status or an action — never a
+     label; a label is an outline or plain text. Calendar colours (school,
+     festival, holiday) belong to calendar surfaces only: MONTH, LIST, the
+     day panel and the Coming up card's chips.
+   - Ink. Two greys: --fg and --muted. A third, --faint, is for what is
+     there to be skipped: placeholders ("—") and dividers.
+   - Type. Five sizes: display (the clock), title, heading, body, caption.
+     Nunito for the first three, the system sans for the other two.
+   - Depth. A card sits on the page with a hairline and no shadow. Anything
+     that floats over the page — a sheet, a pad, the frame chip, a confirm —
+     has the one float shadow and no hairline. */
+
+@font-face {
+  font-family: 'Nunito';
+  /* One variable file covers every weight we use. */
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/nunito-latin-variable.woff2') format('woff2');
+}
+
+/* Day is paper: a warm off-white wall, white cards on it, and one hairline
+   holding each card's edge. The dark version of this screen read as a
+   dashboard — a thing that monitors a family. This one is meant to read as
+   something pinned up in the kitchen. */
+:root {
+  /* Surfaces and ink */
+  --bg: #fbfaf7;
+  --card: #ffffff;
+  --fg: #1d2433;
+  --muted: #6b7280;
+  /* Placeholders and dividers: the ink at 45%. */
+  --faint: color-mix(in srgb, var(--fg) 45%, transparent);
+  --line: #e8e6e1;
+
+  /* A card is white on off-white, so the border does the separating and the
+     shadow only lifts it. Both are tokens because night wants neither. */
+  --card-border: 1px solid var(--line);
+  /* Cards have the hairline and no shadow; floating things the reverse. */
+  --card-shadow: none;
+  --shadow-float: 0 8px 28px rgba(20, 24, 32, 0.14);
+
+  /* Meanings. Each child's colour is data (family.yaml): its variables —
+     --kid-<id>, --shade-<id>, --tint-<id>, --ink-<id>, --chip-ink-<id> — are
+     written at runtime by shell/kidPalette.ts, by the same rules as these. */
+  --school: #2fa463;
+  --festival: #e0a121;
+  --holiday: #7b61ff;
+  --good: #22c55e;
+
+  /* To-do chips, in their shades. Open: a warm grey chip, a grey ring, the
+     worth a shade darker than --muted (which is 4.39:1 on the chip). Done:
+     the good green, as a background, a border and an ink. Declined: dimmed,
+     in --muted, the darkest dim that still reads at 4.5:1. */
+  --chip-bg: #f5f4f0;
+  --chip-ring: #c9c6bf;
+  --chip-worth: #5e6470;
+  --chip-dim: var(--muted);
+  --good-bg: #e8f7ee;
+  --good-line: #cdebd8;
+  --good-ink-chip: #15803d;
+
+  /* The same meanings as a background a word can sit on. Colour is never a
+     fill behind white text here: a pill is the tint with the page's own ink
+     on it, which keeps every label at full contrast whatever the colour is.
+
+     A child's tint is written by shell/kidPalette.ts, for day and night. */
+  --tint-school: #e8f7ee;
+  --tint-festival: #fff6e0;
+  --tint-holiday: #f1edff;
+
+  /* The same meanings again, dark enough to be read as words on paper.
+     A colour chosen to be seen across a room is not a colour you can write
+     in: an orange like #FF6A45 on white is 2.84:1, under even the large-text
+     floor, and --festival is 2.26:1. So each meaning has three forms and the
+     stylesheets pick by job — the colour fills, the tint carries, the ink
+     writes. Night needs none of this and sets every ink back to the colour.
+
+     Each one is its colour mixed towards --fg until it clears 4.5:1 against
+     --bg and no further, which is what shell/tint.ts does at runtime for
+     each child's colour. Measured against --bg rather than --card because the
+     page is the darker of the two: school green clears on a white card at
+     4.64 and fails on the wall behind it at 4.44. */
+  --ink-school: #2a8256;
+  --ink-festival: #916e28;
+  --ink-holiday: #725bec;
+  --ink-good: #20844d;
+  --ink-bad: #b3261e;
+
+  /* The disc an avatar sits on: pale by day, so a white card is not
+     interrupted by two saturated coins, with the animal's own colours doing
+     the identifying. The initial, for a kid with no animal, then has to be
+     the colour rather than the paper. */
+  --avatar-disc: var(--kid-tint, var(--kid));
+  --avatar-ink: var(--kid-ink, var(--kid));
+
+  /* What a sheet lays over the screen behind it. Always the ink, never the
+     paper: a white scrim on a white page does not read as "this is behind". */
+  --scrim: rgba(29, 36, 51, 0.45);
+
+  /* Type. Nunito is the display face; the body is the system stack, which
+     renders faster and is what iOS draws best at small sizes. */
+  --display: 'Nunito', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* 800, not 900: on white, the heaviest Nunito closes its counters and the
+     names stop being letters at a distance. Night keeps 900, where the ink is
+     dimmer and needs the weight back. */
+  --weight-display: 800;
+
+  /* The type scale. Every font-size in the app is one of these five. */
+  --t-display: 96px;
+  --t-title: 32px;
+  --t-heading: 20px;
+  --t-body: 18px;
+  --t-caption: 14px;
+  /* The one exception to the scale: the frame chip, read from across the
+     room over a photograph, at the sizes it was drawn for. Large is these
+     at 1.25x (a transform on the chip). */
+  --chip-time: 44px;
+  --chip-meridiem: 18px;
+  --chip-temp: 28px;
+  --chip-range: 15px;
+
+  /* Space and shape. Everything is a multiple of the unit. */
+  --unit: 8px;
+  --gap: 16px;
+  --pad: 24px;
+  /* Four radii: a card, a button, a chip, and fully round. */
+  --r-card: 20px;
+  --r-button: 14px;
+  --r-chip: 10px;
+  --r-pill: 999px;
+  --radius: var(--r-card);
+  --row: 56px;
+  --tap: 44px;
+  --key: 64px;
+
+  --avatar-day: 64px;
+  --avatar-night: 40px;
+
+  /* The day screen's budget, in pixels, because a budget is the only way a
+     screen that never scrolls can promise nothing falls off the end of it.
+     The four bands are the rows of one grid in both orientations; everything
+     inside a card is a fixed row height, and KidColumn counts rows against
+     the same numbers (screens/day/budget.ts) rather than measuring. */
+  --day-margin: 24px;
+  --day-header: 88px;
+  --day-strip: 44px;
+  --day-kids-min: 340px;
+  --day-bottom: 168px;
+
+  --card-head: 64px;
+  --card-headline: 24px;
+  --card-week: 16px;
+  --card-row: 44px;
+
+  /* The chip over the photo frame. The frame is always photographs on black,
+     so these are the same in both palettes: a frosted pill, deepening over a
+     bright corner, with the page's white ink on it. */
+  --frame-chip-bg: rgba(18, 22, 30, 0.34);
+  --frame-chip-bg-bright: rgba(18, 22, 30, 0.62);
+  --frame-chip-rule: rgba(255, 255, 255, 0.22);
+  --frame-chip-ink: rgba(255, 255, 255, 0.94);
+  --frame-chip-ink-soft: rgba(255, 255, 255, 0.68);
+  --frame-chip-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --card-foot: 32px;
+  --plan-head: 32px;
+  --plan-row: 40px;
+
+  --col-time: 96px;
+  --col-meal-label: 88px;
+  --glyph: 20px;
+  --chip-owner: 20px;
+  --chip-avatar: 24px;
+
+  /* The parent screen: a settings app, on the same type scale. */
+  --pp-radius: var(--r-card);
+  --pp-rail: 240px;
+  --pp-rail-row: 48px;
+  --pp-item: 72px;
+  --pp-tabbar: 56px;
+  --col-week-label: 72px;
+  --pp-thumb: 120px;
+  --pp-card-gap: 24px;
+}
+
+/* Night keeps the same meanings, dimmed. Kid colours are the one thing
+   lifted rather than dimmed: each is mixed with white at 45%, because whose
+   row this is has to survive the dark, and a dark kid colour on #05070A does
+   not. */
+html[data-theme='night'] {
+  --bg: #05070a;
+  --card: #0b1017;
+  --fg: rgba(243, 238, 230, 0.6);
+  /* 0.40, not 0.35: at 0.35 muted text on the night background falls to
+     2.83:1, under the 3:1 the design checks hold it to. */
+  --muted: rgba(243, 238, 230, 0.4);
+  --school: rgba(123, 211, 137, 0.55);
+  --festival: rgba(242, 184, 75, 0.6);
+  --holiday: rgba(179, 157, 255, 0.55);
+  --good: rgba(52, 211, 153, 0.5);
+
+  /* The same chip shades on the dark, each read at 4.5:1 on its own
+     background. */
+  --chip-bg: rgba(243, 238, 230, 0.06);
+  --chip-ring: rgba(243, 238, 230, 0.35);
+  --chip-worth: rgba(243, 238, 230, 0.62);
+  --chip-dim: rgba(243, 238, 230, 0.55);
+  --good-bg: rgba(52, 211, 153, 0.14);
+  --good-line: rgba(52, 211, 153, 0.35);
+  --good-ink-chip: #6ee7b7;
+
+  /* A hairline in the dark is the ink at a tenth, not the paper's grey. The
+     shadow goes entirely: a near-black card cannot be lifted off a black
+     wall, and drawing one only costs a compositing layer. */
+  --line: rgba(243, 238, 230, 0.12);
+  --card-border: 0;
+  --card-shadow: none;
+  --shadow-float: 0 8px 28px rgba(0, 0, 0, 0.5);
+
+  /* There is no white to tint towards, so a tint is the colour itself at the
+     weight that used to be written inline on each pill. A child's night forms
+     are written by shell/kidPalette.ts: their colour mixed with white 45%. */
+  --tint-school: color-mix(in srgb, var(--school) 20%, transparent);
+  --tint-festival: color-mix(in srgb, var(--festival) 22%, transparent);
+  --tint-holiday: color-mix(in srgb, var(--holiday) 22%, transparent);
+
+  /* Nothing needs darkening against black: the dimmed colours already are
+     the readable form, and an ink here would be a second dimming. */
+  --ink-school: var(--school);
+  --ink-festival: var(--festival);
+  --ink-holiday: var(--holiday);
+  --ink-good: var(--good);
+  --ink-bad: #e5534b;
+
+  /* Full strength: a pale disc disappears into a dark card, and the initial
+     on top of it goes back to being the paper. */
+  --avatar-disc: var(--kid);
+  --avatar-ink: var(--bg);
+
+  --scrim: rgba(5, 7, 10, 0.7);
+
+  --weight-display: 900;
+}
+
+/* -- text that has run out of room -----------------------------------------
+   Three rules, and the day screen uses nothing else. A line of text either
+   fits, or ends in an ellipsis that says it did not, or is not drawn at all.
+   What it may never do is be squeezed until it is two letters wide: that is
+   text that looks present and says nothing, which is worse than either. */
+
+/* One line, and an ellipsis where it stops. */
+.clamp-1 {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Two lines, and an ellipsis at the end of the second. */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+}
+
+/* Whatever is left of the row, and nothing at all when that is too little.
+
+   The wrapper grows into the space its siblings did not take and is the
+   container its own child is measured against, so the question asked is
+   the right one — not "how wide is the card" but "how much room is over".
+   A size container has no intrinsic width, which is also what stops it
+   pushing back on the text beside it: the title keeps its natural width and
+   the place gets the rest. */
+.hide-under-120,
+.hide-under-140 {
+  flex: 1 1 0;
+  display: block;
+  overflow: hidden;
+}
+
+.hide-under-120 {
+  container: under-120 / inline-size;
+}
+
+.hide-under-140 {
+  container: under-140 / inline-size;
+}
+
+/* A block, so a clamp on it has a width to clamp to. */
+.hide-under-120 > *,
+.hide-under-140 > * {
+  display: block;
+}
+
+@container under-120 (width < 120px) {
+  .hide-under-120 > * {
+    display: none;
+  }
+}
+
+@container under-140 (width < 140px) {
+  .hide-under-140 > * {
+    display: none;
+  }
+}

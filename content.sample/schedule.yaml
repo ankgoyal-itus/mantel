@@ -1,0 +1,7 @@
+# Each week's regular things.
+items:
+  - {kid: mira, title: Piano, days: [tue], start: "16:00", end: "16:45", where: "Ms. Lee's", note: "bring the blue book"}
+  - {kid: kabir, title: Soccer, days: [wed], start: "17:00", end: "18:00", where: "Oak field"}
+  - {kid: kabir, title: Swim, days: [thu], start: "17:00", end: "18:00", where: "Aquatic center"}
+  - {kid: family, title: Library, days: [sat], start: "10:30", end: "11:30"}
+exceptions: []

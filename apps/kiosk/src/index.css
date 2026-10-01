@@ -1,0 +1,275 @@
+/* Base: the shell, the stage and the few things every screen shares.
+   Colours and sizes come from theme.css and nowhere else. */
+
+@import './theme.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+/* Sized in pixels from innerWidth/innerHeight, because Safari still moves the
+   viewport units as its toolbars come and go. */
+.stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* The wake crossfade wraps the screen, so it has to carry the height through
+   or every screen sizes to its own content and overflows the stage. */
+.screen-wrap {
+  height: 100%;
+}
+
+.screen {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.screen-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+button {
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* A decision pressed once (usePressGuard): it shows pressed for the 400ms
+   in which a second press is dropped, so the second one is not a surprise. */
+button[data-pressed] {
+  filter: brightness(0.9);
+  transform: scale(0.97);
+}
+
+/* The display face, for the things that are read across a room. */
+.clock,
+.kid-name,
+.day-date,
+.day-clock,
+.night-clock,
+.mo-month,
+h1,
+h2 {
+  font-family: var(--display);
+}
+
+.rotate {
+  font-family: var(--display);
+  font-size: var(--t-title);
+  color: var(--muted);
+}
+
+/* The avatar disc. By day the animal sits on a pale wash of the kid's
+   colour, so two saturated coins do not interrupt a white card; at night the
+   disc goes back to the colour itself, which is the only thing that finds a
+   child's row in the dark. */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--avatar-disc);
+}
+
+.avatar-animal {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.avatar-initial {
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: var(--weight-display);
+  color: var(--avatar-ink);
+}
+
+.avatar-initial-small {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 700;
+}
+
+/* A grown-up: letters in the muted ink on a hairline disc, not a colour. */
+.avatar-parent {
+  /* A disc drawn in the hairline, not filled with it: --muted on a filled
+     --line disc is 3.9:1, and on the page it clears 4.5. */
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.avatar-parent .avatar-initial {
+  color: var(--muted);
+}
+
+/* The pill under the date: what kind of day this is.
+
+   Tint behind, the page's own ink on top. Never white on the colour: the
+   meaning colours are picked to be found across a room, and a word reversed
+   out of one is the least readable thing a light screen can do. At night
+   there is no paper to tint towards, so the word takes the colour back —
+   that is what makes a festival still read as a festival in the dark. */
+.pill {
+  display: inline-block;
+  margin-top: var(--unit);
+  padding: 3px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* Only shown once what is on screen is old enough to be wrong. */
+.stale {
+  position: absolute;
+  right: var(--pad);
+  bottom: var(--unit);
+  display: flex;
+  align-items: center;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.stale-dot {
+  width: 10px;
+  height: 10px;
+  margin-right: var(--unit);
+  border-radius: var(--r-pill);
+  background: var(--festival);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.more {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+/* The chip is a diagnostic, and lives only where a parent looks. */
+.chip {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.chip-amber {
+  color: var(--ink-festival);
+}
+
+.chip-red {
+  color: var(--ink-bad);
+}
+
+.diag {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 32px;
+  font-family: var(--body);
+}
+
+.diag-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.diag-key {
+  min-width: 190px;
+  color: var(--muted);
+}
+
+.diag-value {
+  word-break: break-all;
+}
+
+.diag-json {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.diag-json-bad {
+  color: var(--ink-bad);
+}
+
+.diag-hint {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* One nod when a card opens into kid mode, and never again. Not a greeting
+   every five minutes: an animal that moves on a loop is a thing on the wall
+   that will not stop moving. */
+.avatar-nod {
+  animation: avatar-nod 400ms ease-out 1;
+  transform-origin: 50% 80%;
+}
+
+@keyframes avatar-nod {
+  0% {
+    transform: rotate(0deg) translateY(0);
+  }
+  40% {
+    transform: rotate(-7deg) translateY(2px);
+  }
+  70% {
+    transform: rotate(5deg) translateY(0);
+  }
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-nod {
+    animation: none;
+  }
+}

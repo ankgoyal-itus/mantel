@@ -1,0 +1,241 @@
+/* The photo frame. Two slides at most are on screen at once: the one arriving
+   fades in over the one leaving, and the one leaving is dropped when the fade
+   is done. */
+
+.frame {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+}
+
+.slide-entering {
+  animation: frame-fade 800ms ease-out both;
+}
+
+/* The caption changes with its photo, over the same 800ms. */
+.frame-when-in {
+  animation: frame-fade 800ms ease-out both;
+}
+
+/* The photo itself, blown up past the edges and blurred, so nothing sits on
+   bare black bars. Darkened, so it never competes with the photo on top. */
+.slide-wash {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  filter: blur(30px) brightness(0.45);
+  /* The blur samples past the edge, so the layer is oversized to hide it. */
+  transform: scale(1.12);
+}
+
+.slide-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Slow drift across the slide: an unmoving photo on a wall reads as a
+     screenshot. Runs for exactly one slide and holds where it lands. */
+  animation: frame-drift var(--slide-ms, 20000ms) linear both;
+}
+
+/* An iPad asking for less motion gets a still photo, which is the whole
+   point of the setting. */
+@media (prefers-reduced-motion: reduce) {
+  .slide-photo {
+    animation: none;
+  }
+
+  .slide-entering {
+    animation-duration: 400ms;
+  }
+}
+
+.frame-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+/* Caption and clock share one corner. */
+.frame-captions {
+  position: absolute;
+  right: 26px;
+  bottom: 22px;
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+  opacity: 0.4;
+  color: #fff;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+/* At night the photograph is the only thing that should be visible at all. */
+.frame-captions-night {
+  opacity: 0.25;
+}
+
+.frame-clock {
+  font-feature-settings: 'tnum';
+}
+
+@keyframes frame-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes frame-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+
+
+/* Every change of screen: the new one fades in over 200ms. */
+.mode-in {
+  animation: mode-in 200ms ease-out both;
+}
+
+@keyframes mode-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-in {
+    animation: none;
+  }
+}
+
+/* -- the chip --------------------------------------------------------------
+   Top-right, 24px from both edges, over the photo and above the crossfade.
+   Fades in once as the frame starts; nothing in it moves after that. */
+
+.frame-chip {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--frame-chip-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--shadow-float);
+  color: var(--frame-chip-ink);
+  text-shadow: var(--frame-chip-text-shadow);
+  transform-origin: top right;
+  pointer-events: none;
+  animation: frame-chip-in 400ms ease-out both;
+}
+
+/* For the far side of the room. */
+.frame-chip-large {
+  transform: scale(1.25);
+}
+
+/* Over a bright corner the pill deepens and the small line takes full ink:
+   the pill, not the photo, carries the contrast. */
+.frame-chip-bright {
+  background: var(--frame-chip-bg-bright);
+}
+
+.frame-chip-time {
+  font-family: var(--display);
+  font-size: var(--chip-time);
+  font-weight: 600;
+  line-height: 1;
+  font-feature-settings: 'tnum';
+  white-space: nowrap;
+}
+
+.frame-chip-meridiem {
+  margin-left: 4px;
+  font-family: var(--body);
+  font-size: var(--chip-meridiem);
+}
+
+.frame-chip-rule {
+  align-self: stretch;
+  width: 1px;
+  background: var(--frame-chip-rule);
+}
+
+.frame-chip-glyph {
+  flex: none;
+}
+
+.frame-chip-weather {
+  display: flex;
+  flex-direction: column;
+}
+
+.frame-chip-temp {
+  font-family: var(--display);
+  font-size: var(--chip-temp);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.frame-chip-range {
+  display: flex;
+  align-items: center;
+  font-family: var(--body);
+  font-size: var(--chip-range);
+  color: var(--frame-chip-ink-soft);
+  white-space: nowrap;
+}
+
+.frame-chip-bright .frame-chip-range {
+  color: var(--frame-chip-ink);
+}
+
+.frame-chip-dot {
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+}
+
+/* At night the photo is already dimmed; the chip steps back with it. */
+.frame-chip-night {
+  opacity: 0.75;
+}
+
+.frame-chip-night .frame-chip-time {
+  font-weight: 500;
+}
+
+@keyframes frame-chip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame-chip {
+    animation: none;
+  box-shadow: var(--shadow-float);
+}
+}

@@ -1,0 +1,245 @@
+/* The night screen: one centred column, nothing brighter than 60% grey, and
+   nothing that moves. The palette itself comes from html[data-theme='night']
+   in index.css, so every colour here is already dimmed at source.
+
+   No transition or animation belongs in this file. The only thing that changes
+   on this screen is the minute on the clock. */
+
+.night {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 64px;
+}
+
+.night-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 760px;
+  text-align: center;
+}
+
+.night-clock {
+  font-family: var(--display);
+  font-size: var(--t-display);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-feature-settings: 'tnum';
+}
+
+.night-ampm {
+  margin-left: 14px;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 300;
+  color: var(--muted);
+  vertical-align: baseline;
+}
+
+.night-date {
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  color: var(--muted);
+}
+
+.night-weather {
+  margin-top: 40px;
+}
+
+.night-wx {
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  line-height: 1.5;
+}
+
+.night-wx-next {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.night-block {
+  margin-top: 44px;
+  width: 100%;
+}
+
+.night-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin: 0 0 16px;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.night-head-date,
+.night-badge {
+  margin-left: 14px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+
+.night-badge {
+  /* Reads as a label without a border, which would be another bright edge. */
+  font-style: italic;
+}
+
+.night-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.night-row {
+  align-items: center;
+}
+
+.night-who {
+  margin-right: var(--gap);
+  color: var(--muted);
+}
+
+/* Full strength, deliberately: whose row this is has to survive the dark,
+   and the name is the one thing on this screen worth finding at a glance.
+   --kid-ink is that colour at night and a readable version of it by day,
+   which this screen meets when the night window is still open at breakfast. */
+.night-who-kid {
+  color: var(--kid-ink);
+  font-weight: 700;
+  margin-left: var(--unit);
+}
+
+.night-items {
+  display: inline;
+}
+
+.night-item + .night-item::before {
+  content: ' · ';
+  color: var(--muted);
+}
+
+.night-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.night-pack-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.night-pack-label {
+  margin-right: 16px;
+  min-width: 120px;
+  text-align: right;
+  color: var(--muted);
+}
+
+.night-pack-note {
+  margin-left: 12px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+/* A festival on the night screen is a name, not a label: no box around it. */
+.night-observance {
+  font-style: normal;
+  opacity: 0.85;
+}
+
+/* The night date opens the calendar, and looks no different for it. */
+.night-date-button {
+  min-height: 44px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* "How was today" — five faces, one tap, and then it stops asking.
+
+   On the night screen and nowhere else. Nothing here nags: there is no
+   streak, no reminder, and a night nobody answered leaves no gap. */
+.feelings {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  width: 100%;
+  margin-top: var(--unit);
+}
+
+.feelings-title {
+  flex: none;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.feelings-faces {
+  display: flex;
+  gap: var(--unit);
+}
+
+.feeling {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--muted);
+}
+
+/* The one they chose takes their own colour, which is the only answer the
+   screen gives back. */
+.feeling-on {
+  color: var(--kid-ink);
+}
+
+/* The pill sits in the corner of the night screen too, out of the column's
+   way: the same door, in the same place, whatever the hour. */
+.night .parents,
+.night .parents-on {
+  position: absolute;
+  top: var(--pad);
+  right: var(--pad);
+}
+
+.night-pack-none {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* Nothing on at all tomorrow: one line and the moon. */
+.night-empty-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--unit);
+  margin: var(--unit) 0 0;
+}

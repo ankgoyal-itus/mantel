@@ -1,0 +1,22 @@
+# The plan, by date. {{today}}, {{today+1}} and so on are filled in when the
+# sample is made into a home (mantel_api/sample.py), because a dashboard only
+# ever shows the week it is run in. The children pick the rest from
+# meals-catalog.yaml.
+{{today-1}}:
+  breakfast: {id: oatmeal}
+  lunch: {id: dal_rice, note: lunchbox}
+  dinner: {id: veggie_stir_fry}
+{{today}}:
+  breakfast: {id: oatmeal}
+  lunch: {id: pesto_pasta, note: lunchbox}
+  dinner: {id: paneer_tikka}
+{{today+1}}:
+  breakfast: {id: veggie_omelette}
+  lunch: {id: quesadilla}
+  dinner: {id: khichdi}
+{{today+2}}:
+  breakfast: {id: idli_sambar}
+  lunch: {id: dal_rice, note: lunchbox}
+  dinner: {id: khichdi}
+{{today+4}}:
+  dinner: {id: dinner_out, note: Corner Trattoria}

@@ -1,0 +1,38 @@
+# Each child has two lists. weekdays: Monday to Friday when there is school.
+# weekend: Saturday and Sunday, and any weekday with no school.
+#
+# A task is done every day its list is up, unless it says `every: week`.
+# claim: parent marks a task a parent ticks off; it shows a lock.
+# A task in both lists must be written the same way in each.
+mira:
+  weekdays:
+    - {id: bed, title: Make your bed, points: 2, routine: morning}
+    - {id: read, title: Read 20 minutes, points: 5}
+    - {id: hw, title: Homework, points: 5}
+    - {id: outside, title: 30 minutes outside, points: 5}
+    - {id: dishwasher, title: Empty the dishwasher, points: 3, routine: evening}
+    - {id: piano, title: Practice piano, points: 5}
+    - {id: room, title: Tidy room, points: 5, claim: parent, every: week}
+  weekend:
+    - {id: bed, title: Make your bed, points: 2, routine: morning}
+    - {id: read, title: Read 20 minutes, points: 5}
+    - {id: outside, title: 30 minutes outside, points: 5}
+    - {id: sketch, title: Make a sketch, points: 5}
+    - {id: piano, title: Practice piano, points: 5}
+    - {id: room, title: Tidy room, points: 5, claim: parent, every: week}
+kabir:
+  weekdays:
+    - {id: bed, title: Make your bed, points: 2, routine: morning}
+    - {id: read, title: Read 20 minutes, points: 5}
+    - {id: hw, title: Homework, points: 5}
+    - {id: outside, title: 30 minutes outside, points: 5}
+    - {id: dishwasher, title: Empty the dishwasher, points: 3, routine: evening}
+    - {id: dog, title: Feed the dog, points: 2, routine: evening}
+    - {id: plants, title: Water the plants, points: 3, claim: parent}
+  weekend:
+    - {id: bed, title: Make your bed, points: 2, routine: morning}
+    - {id: read, title: Read 20 minutes, points: 5}
+    - {id: outside, title: 30 minutes outside, points: 5}
+    - {id: sketch, title: Make a sketch, points: 5}
+    - {id: dog, title: Feed the dog, points: 2, routine: evening}
+    - {id: plants, title: Water the plants, points: 3, claim: parent}

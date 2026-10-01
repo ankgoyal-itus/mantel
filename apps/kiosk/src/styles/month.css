@@ -1,0 +1,537 @@
+/* The month calendar: seven columns and as many weeks as the month needs
+   (five or six, set inline), with a third of the width given to the panel
+   when a day is open. */
+
+.month {
+  display: flex;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.mo-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px 20px 14px;
+}
+
+.mo-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.mo-month {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: 600;
+}
+
+.mo-masa {
+  margin-top: 2px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.mo-nav {
+  display: flex;
+  align-items: center;
+}
+
+/* 44px minimum, as everything touchable here is. */
+.mo-button {
+  min-width: 52px;
+  height: 46px;
+  margin-left: 8px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--r-button);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+  font-size: var(--t-body);
+  font-family: var(--body);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mo-done {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+.mo-weekdays,
+.mo-grid {
+  display: grid;
+  /* minmax(0, …): a long observance name must ellipsise in its own cell, not
+     widen its column at the other six's expense. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mo-weekday {
+  padding-bottom: 4px;
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  text-align: center;
+}
+
+.mo-grid {
+  flex: 1;
+  min-height: 0;
+}
+
+.mo-cell {
+  position: relative;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px 8px;
+  border: 2px solid transparent;
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--fg);
+  font-family: inherit;
+  text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Days either side of the month. Dimmed with a colour rather than opacity:
+   opacity dropped them to 2.6:1, and a date nobody can read is not a
+   softer date, it is a smudge. */
+.mo-out .mo-number {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.mo-out {
+  background: transparent;
+}
+
+/* The chosen day: a 2px ring in the page's ink, not a fill. A fill darkened
+   the cell until --muted on it failed, and hid the hatch under it. */
+.mo-selected {
+  border-color: var(--fg);
+}
+
+.mo-number {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.mo-tithi {
+  display: block;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.mo-moon,
+.mo-leaf {
+  position: absolute;
+  top: 7px;
+  width: 15px;
+  height: 15px;
+}
+
+.mo-moon {
+  right: 7px;
+  color: var(--muted);
+}
+
+.mo-leaf {
+  right: 26px;
+}
+
+.mo-dots {
+  position: absolute;
+  bottom: 7px;
+  left: 8px;
+  display: flex;
+}
+
+.mo-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-radius: var(--r-pill);
+}
+
+/* There was a second :root here overriding --festival and --holiday for the
+   whole app from a screen's own stylesheet. It is gone: the palette lives in
+   theme.css and nowhere else, which is what that file's first line says. */
+
+/* The panel: a floating surface over the right third, only while a day is
+   open. The grid underneath keeps its cells and the title its line. */
+.month {
+  --mo-head: 84px;
+  position: relative;
+}
+
+.mo-panel {
+  position: absolute;
+  /* Under the header row, so Done and the arrows stay in reach. */
+  top: var(--mo-head);
+  right: 0;
+  bottom: 0;
+  border-top-left-radius: var(--r-card);
+  z-index: 2;
+  width: 33%;
+  min-width: 300px;
+  padding: 20px 22px;
+  border: 0;
+  background: var(--card);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.mo-panel-date {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 600;
+}
+
+.mo-panel-masa {
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.mo-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  margin: 16px 0 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.mo-facts dt {
+  padding-right: 14px;
+  color: var(--muted);
+}
+
+.mo-facts dd {
+  margin: 0 0 6px;
+}
+
+.mo-paksha {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.mo-until {
+  margin-left: 8px;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.mo-panel-block {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.mo-observance {
+  color: var(--ink-festival);
+  margin-bottom: 2px;
+}
+
+.mo-veg {
+  margin-top: 6px;
+  color: var(--ink-school);
+}
+
+.mo-meal {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.mo-meal-label {
+  min-width: 92px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+/* Night: the calendar is read in the dark like everything else. The
+   observance and the leaf now come from the dimmed tokens, which is what
+   these two rules were restating by hand. A cell keeps its own rule: the
+   night card would be a visible tile forty-two times over. */
+html[data-theme='night'] .mo-cell {
+  background: rgba(230, 237, 243, 0.035);
+}
+
+/* -- the design pass ------------------------------------------------------ */
+
+.mo-month {
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: var(--weight-display);
+}
+
+.mo-number {
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+}
+
+/* Family mode shows the name of the day, not its almanac shorthand. */
+.mo-observance-name {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  line-height: 1.15;
+  color: var(--ink-festival);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* No school, on a day school would otherwise be on. */
+/* No school on a day school would otherwise be on: the school colour at a
+   tenth, and the words under the number. */
+.mo-noschool {
+  background: color-mix(in srgb, var(--school) 10%, var(--card));
+}
+
+.mo-noschool-note {
+  display: block;
+  /* The page's ink: the school green on its own tint is 4.27:1. */
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Today's ring is the accent, so it stays told apart from the day chosen. */
+.mo-today {
+  border-color: var(--ink-good);
+}
+
+.mo-today.mo-selected {
+  border-color: var(--fg);
+}
+
+/* The page ink, not the muted grey. The toggle sits on the same 8% surface
+   the other buttons do, and --muted on that is 3.97:1. Off and on are told
+   apart by the surface — plain grey against the festival tint — which is the
+   same thing the pills do, and does not ask a colour to carry a state. */
+.mo-toggle {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.mo-toggle-on {
+  background: var(--tint-festival);
+  color: var(--fg);
+}
+
+html[data-theme='night'] .mo-toggle-on {
+  color: var(--festival);
+}
+
+.mo-leaf {
+  color: var(--ink-school);
+}
+
+/* "Dwadashi ◑": 16px, the one label on a wall screen allowed under 20. With
+   the day panel open the cell says the short form ("Dwad ◑") instead, so
+   the glyph always fits: one line, and never an ellipsis. */
+.mo-tithi {
+  margin-top: 2px;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  white-space: nowrap;
+}
+
+/* The leaf on days already gone, at half: still true, no longer news. */
+.mo-past .mo-leaf {
+  opacity: 0.5;
+}
+
+.mo-observance-holiday {
+  color: var(--ink-holiday);
+}
+
+/* A 3px bar per child with something on, under the day number. */
+.mo-bars {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.mo-bar {
+  width: 20px;
+  height: 3px;
+  border-radius: var(--r-chip);
+}
+
+/* -- the legend -----------------------------------------------------------
+   One row under the grid: whose bar is whose, the dots, the hatch, and the
+   almanac's leaf and moons. */
+
+.mo-legend {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--gap);
+  margin-top: var(--unit);
+  overflow: hidden;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.mo-key {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.mo-key .mo-dot {
+  margin-right: 0;
+}
+
+.mo-key-bar {
+  width: 16px;
+  height: 4px;
+  border-radius: var(--r-chip);
+}
+
+.mo-key-hatch {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--school) 10%, var(--card));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--school) 30%, transparent);
+}
+
+.mo-key-glyph {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.mo-key-leaf {
+  color: var(--ink-school);
+}
+
+/* With the panel open the grid has two thirds of the width: the month's
+   name stays on one line at 24px and the masa line ellipsises, and the
+   legend gives way — the panel beside it says what the day is. */
+.mo-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.month-with-panel .mo-masa,
+.mo-panel-masa {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mo-panel-date {
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The panel slides in rather than appearing, with the same 250ms the shop
+   uses, so there is one way things open in Mantel. Transform only: a width
+   animation would relayout the grid forty-two times a frame on an iPad that
+   has other things to do. */
+.mo-panel {
+  animation: mo-panel-in 250ms ease-out 1;
+}
+
+@keyframes mo-panel-in {
+  from {
+    transform: translateX(12%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mo-panel {
+    animation: none;
+  }
+}
+
+/* One word, one line, and it must not push the number off the cell. */
+.mo-observance-name {
+  -webkit-line-clamp: 1;
+}
+
+/* Upright, two thirds of 768px is too narrow a grid: the day's panel goes
+   under the grid instead of beside it, and the grid keeps its seven full
+   columns. */
+@media (orientation: portrait) {
+  .month-with-panel {
+    flex-direction: column;
+  }
+
+  .month-with-panel .mo-main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .month-with-panel .mo-panel {
+    position: static;
+    flex: none;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+/* On the no-school tint the almanac's words take the page's ink. */
+.mo-noschool .mo-tithi,
+.mo-noschool .mo-observance-name {
+  color: var(--fg);
+}
+
+/* The tithi's two forms, chosen by the cell's own width. */
+.mo-cell {
+  container: mo-cell / inline-size;
+}
+
+.mo-tithi-short {
+  display: none;
+}
+
+@container mo-cell (width < 128px) {
+  .mo-tithi-long {
+    display: none;
+  }
+
+  .mo-tithi-short {
+    display: inline;
+  }
+}

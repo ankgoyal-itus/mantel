@@ -1,0 +1,31 @@
+node_modules/
+.venv/
+__pycache__/
+.DS_Store
+dist/
+.env
+
+# The family's own state: content, photos, caches, backups and the ledger
+# (MANTEL_HOME, default home/). Never committed. content/ is where it lived
+# before MANTEL_HOME, and stays ignored so an old checkout cannot leak it.
+home/
+home.pre-switch-*/
+content/
+
+# The sample family's generated calendars and photos (scripts/make-sample-*).
+content.sample/calendars/
+content.sample/photos/
+
+# Staging for `make photos`; inbox/README.md is the only tracked thing in it.
+inbox/*
+!inbox/README.md
+
+services/api/static/
+
+# The design suite and `make smoke` render these; `make screenshots` picks the
+# published ones into screenshots/.
+docs/screens/*.png
+screenshots/raw/
+
+# Private working files: the denylist and the publish inventory.
+.local/

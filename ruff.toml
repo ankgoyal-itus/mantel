@@ -1,0 +1,8 @@
+# For the Python that lives outside services/api — today just tests/smoke.
+# The API keeps its own [tool.ruff] in services/api/pyproject.toml, which wins
+# for everything under it. Same rules here, so `make check` reads the same.
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]

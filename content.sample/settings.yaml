@@ -1,0 +1,30 @@
+# The sample family's settings. Every calendar is a local file, written beside
+# this one by `make demo` (scripts/make-sample-calendars.py), so nothing here
+# needs the network or a secret.
+timezone: America/Los_Angeles
+location: {name: Half Moon Bay, lat: 37.4636, lon: -122.4286}
+units: {temp: F}
+night: {start: "21:00", end: "06:30", idle_minutes: 10, frame: false}
+idle_minutes: 3
+slide_seconds: 20
+refresh_minutes: 5
+daily_reload: "04:00"
+panchang: {masa_scheme: purnimanta, show_yoga_karana: false}
+points: {streak_bonus: 20, streak_days: 7, roblox_per_week: 2, deductions: false, parent_idle_minutes: 2}
+feelings: {enabled: false}
+allowance: {amount_note: "$1 a day", reminder_hour: 18}
+calendars:
+  - {id: family, kind: family, kid: family, url: calendars/family.ics}
+  - {id: seaview, kind: school, kid: mira, url: calendars/school-mira.ics, name: Seaview Elementary}
+  - {id: bayside, kind: school, kid: kabir, url: calendars/school-kabir.ics, name: Bayside Middle}
+  - {id: festivals, kind: festival, url: calendars/festivals.ics, name: Festivals}
+diet:
+  vegetarian: [mum, dad]
+  non_veg_ok: [mira, kabir]
+  non_veg_days: [mon, wed, fri, sat, sun]
+  # No meat for anyone on these, whatever the day of the week.
+  no_non_veg_festivals:
+    - {match: diwali, span_days: 1}
+    - {match: janmashtami}
+  no_non_veg_dates_extra: []
+  non_veg_ok_dates: []

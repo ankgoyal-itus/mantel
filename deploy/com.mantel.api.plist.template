@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Written to ~/Library/LaunchAgents/com.mantel.api.plist by deploy/service.sh.
+     __REPO__ and __LOGS__ are filled in there; do not edit the installed copy,
+     edit this template and run `make install-service` again. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mantel.api</string>
+
+  <!-- The venv's own python, so no shell, PATH or pyenv has to be right. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>__REPO__/services/api/.venv/bin/python</string>
+    <string>-m</string>
+    <string>mantel_api</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- content/, VERSION and the build are all found from here. -->
+    <key>MANTEL_ROOT</key>
+    <string>__REPO__</string>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Restart after a crash, but stay down after a deliberate stop. -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+
+  <!-- A crash loop backs off instead of spinning the fans. -->
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <!-- Interactive keeps macOS from throttling it like a batch job. -->
+  <key>ProcessType</key>
+  <string>Interactive</string>
+
+  <key>StandardOutPath</key>
+  <string>__LOGS__/api.log</string>
+  <key>StandardErrorPath</key>
+  <string>__LOGS__/api.err.log</string>
+</dict>
+</plist>

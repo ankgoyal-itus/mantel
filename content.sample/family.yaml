@@ -1,0 +1,9 @@
+# The sample family: two children and two parents, none of them real.
+# birthday is optional, and MM-DD. No year is stored anywhere: the screen
+# says whose birthday it is and never how old they are.
+kids:
+  - {id: mira, name: Mira, color: "#1F8A8A", avatar: fox, birthday: "05-09"}
+  - {id: kabir, name: Kabir, color: "#D97706", avatar: panda, birthday: "11-21"}
+parents:
+  - {id: mum, name: Mum}
+  - {id: dad, name: Dad}

@@ -1,0 +1,1522 @@
+/* The day dashboard: one grid of four bands, the same in both orientations.
+   Every colour and measurement is a token from theme.css.
+
+   Nothing here squeezes text to fit. A line either fits, ends in an ellipsis
+   (.clamp-1), or is not drawn (.hide-under-*): the flex rows used to shrink
+   whatever gave way first, which is how "Swim" came to render as "S". */
+
+.day {
+  display: grid;
+  grid-template-rows: var(--day-header) var(--day-strip) minmax(var(--day-kids-min), 1fr) var(--day-bottom);
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  row-gap: var(--gap);
+  padding: var(--day-margin);
+}
+
+/* The kids' row takes whatever the other bands leave, and the cards fill
+   it. When the leftover is room for three more days (160px or more), a fifth
+   row holds them instead, and the kids' row is as tall as the taller card. */
+.day-coming-up {
+  grid-template-rows: var(--day-header) var(--day-strip) auto var(--day-bottom) 1fr;
+}
+
+/* -- header ---------------------------------------------------------------
+   Three sizes only: the date and temperature at heading size, the clock
+   large, the high and low small. 88px, which is the clock's own height: the
+   date sits over one line holding the day's pill and the greeting. */
+
+/* One baseline across the header: the date-and-greeting stack, the clock
+   and the weather block all sit on it (the last line of each), in both
+   orientations. */
+.day-header {
+  display: flex;
+  align-items: last baseline;
+  gap: var(--gap);
+  height: var(--day-header);
+}
+
+.day-header-left {
+  flex: 1 1 0;
+  /* min-width rather than overflow: a box that clips takes its baseline
+     from its bottom edge, and the header's shared baseline is its text's.
+     Its lines clamp themselves. */
+  min-width: 0;
+}
+
+.day-date {
+  display: block;
+  max-width: 100%;
+  min-height: var(--tap);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: 700;
+  text-align: left;
+}
+
+/* The pill and the greeting, on the one line the header has under the date.
+   The pill is what kind of day it is and never gives way; the greeting is a
+   kindness, and takes what is over. */
+.day-sub {
+  display: flex;
+  /* On their text: the row's baseline is then the pill's and the greeting's,
+     even upright, where the greeting is hidden and would otherwise lend the
+     row an empty box's bottom edge. */
+  align-items: last baseline;
+  gap: var(--unit);
+  height: 36px;
+}
+
+.day-sub .pill {
+  flex: none;
+  max-width: 100%;
+  margin: 0;
+}
+
+.day-hello {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 24px;
+  color: var(--muted);
+}
+
+.day-hello svg {
+  margin-right: 6px;
+  vertical-align: -4px;
+}
+
+/* Tracking at zero, not the -2px the dark screen used. Tightening was what
+   kept a bright clock from glowing into itself; on paper it only closes the
+   gaps and the figures stop being separable at a glance. The line is the
+   header's height, which the figures sit inside with room to spare. */
+.day-clock {
+  flex: none;
+  font-family: var(--display);
+  font-size: var(--t-display);
+  font-weight: 300;
+  line-height: var(--day-header);
+  letter-spacing: 0;
+  font-feature-settings: 'tnum';
+}
+
+.day-meridiem {
+  margin-left: var(--unit);
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  line-height: 1;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.day-weather {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.wx-icon {
+  margin-right: 10px;
+  color: var(--fg);
+}
+
+.wx-text {
+  text-align: right;
+}
+
+.wx-now {
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.wx-detail {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.day-header .parents {
+  flex: none;
+  margin-left: 0;
+  /* Centred on the clock's x-height rather than its line: on the shared
+     baseline, lifted by half the display face's x-height (about 0.24 of
+     it) less the pill's own drop below its middle. */
+  align-self: last baseline;
+  position: relative;
+  top: calc(var(--t-display) * -0.24 + 6px);
+}
+
+/* -- the family strip -----------------------------------------------------
+   What the whole house is doing today, as pills, with the jar pinned at the
+   far end. A pill is a small card — white on the warm ground, with the same
+   hairline the real cards have — because these are things the house is
+   doing, and the festival tint said Diwali about a dentist. */
+
+.fam {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  height: var(--day-strip);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  overflow: hidden;
+}
+
+/* Scrolls sideways rather than shrinking anything, though the "+N" pill is
+   what normally stops it having to. */
+.fam-row {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.fam-row::-webkit-scrollbar {
+  display: none;
+}
+
+.fam-pill,
+.fam-more-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--unit);
+  height: 36px;
+  padding: 0 14px;
+  border: var(--card-border);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.fam-when {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Whose it is, out of the brackets the calendar writes it in. One letter is
+   enough between two parents, and the full name is on the title attribute
+   for anyone who leans in. */
+.fam-who {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--chip-owner);
+  height: var(--chip-owner);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* A pill is a way to today in the list, filtered to the family. The same
+   shape as "+N": the target is the 44px, the picture is the pill. */
+.fam-tap {
+  flex: none;
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+/* The count of what did not fit. A button the strip's full height, with the
+   pill drawn inside it: the target is the 44px, the picture is the pill. */
+.fam-more {
+  flex: none;
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+}
+
+.fam-more-pill {
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  color: var(--muted);
+}
+
+/* The family jar: the house's, not either child's, so it is on the strip
+   rather than a card. On the festival tint, because that is what the jar is
+   for — the things the whole family does. */
+.fam-jar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Something in the jar: the festival's tint, the page's ink. */
+.fam-jar-some {
+  border-color: transparent;
+  background: var(--tint-festival);
+  color: var(--fg);
+}
+
+html[data-theme='night'] .fam-jar-some {
+  color: var(--festival);
+}
+
+.fam-none {
+  flex: 1 1 auto;
+  color: var(--muted);
+}
+
+/* -- the kid cards --------------------------------------------------------
+   Two equal columns. A card ends where its content does: the rows are
+   counted against the band's height before anything is drawn (budget.ts),
+   so whatever the band has over is space under the cards. */
+
+.day-kids {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--gap);
+}
+
+/* With no Coming up under the day cards, the height it would have had is
+   the kids': the row takes the rest of the screen and both cards fill it,
+   so nothing is left empty under them while a to-do goes short of room. */
+.day:not(.day-coming-up) .day-kids {
+  align-items: stretch;
+}
+
+.kid {
+  display: flex;
+  flex-direction: column;
+  padding: 8px var(--pad);
+  border: var(--card-border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* Nothing on a card gives up its height to make the card fit.
+
+   A flex child shrinks by default, and a child that shrinks hides an overflow
+   instead of showing it: the headline went to 3px tall — present, measured,
+   and unreadable — while the card it was in reported that everything fitted.
+   With this, too much content overflows, and an overflow is something the
+   design suite can see. */
+.kid > * {
+  flex: none;
+}
+
+.kid-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--unit);
+}
+
+.kid-name {
+  flex: 0 1 auto;
+  margin: 0 0 0 var(--gap);
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  color: var(--kid-ink);
+}
+
+.kid-section {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 6px 0 2px;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Riding on the heading, not on a line of its own: a line that says "1 more"
+   costs exactly as much height as the row it is apologising for. */
+.kid-section .more {
+  font-weight: 400;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One line, always. A row that wraps takes the next row's space and the card
+   silently loses whatever was at the bottom of it. */
+.row {
+  display: flex;
+  align-items: center;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 56px in kid mode, where a finger lands on it; the dashboard's are 44. */
+.row {
+  height: var(--row);
+}
+
+.row-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-right: 10px;
+  border-radius: var(--r-pill);
+  background: var(--kid);
+}
+
+.row-dot-school {
+  background: var(--school);
+}
+
+/* Now, or next: a ring in the row's own tint, so one row on the card is
+   marked without a second colour. */
+.row-dot-on {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kid) 28%, transparent);
+}
+
+.row-dot-school.row-dot-on {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--school) 28%, transparent);
+}
+
+/* Fixed, and in tabular figures, so the titles start on the same x whatever
+   the times are. */
+.row-time {
+  flex: none;
+  box-sizing: border-box;
+  width: 140px;
+  padding-right: var(--unit);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The title is the row: laid out at its natural width, and ellipsised only
+   when it alone would overrun. The place beside it is in a .hide-under-120,
+   which takes what is left and draws nothing under 120px of it — so a short
+   title keeps its place and a long one is never cut to make room for one. */
+.row-title {
+  flex: 0 1 auto;
+}
+
+.row .hide-under-120 {
+  margin-left: var(--gap);
+}
+
+.row-where {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.row-glyph {
+  flex: none;
+  margin-left: auto;
+  padding-left: var(--unit);
+  box-sizing: content-box;
+  color: var(--ink-school);
+}
+
+/* What is done is not gone, but it is not the point any more. The title
+   demotes to the muted ink rather than fading: on paper an opacity over
+   --muted cannot clear 4.5:1 whatever value is picked. */
+.row-past .row-title {
+  color: var(--muted);
+}
+
+.row-past .row-dot {
+  background: var(--faint);
+  box-shadow: none;
+}
+
+/* -- the budgeted card ----------------------------------------------------
+   The dashboard's card, row by row: head 64, headline 24, agenda rows 44,
+   chips in 44px rows 10 apart, footer 32. These are the numbers budget.ts
+   and chips.ts count with; change one and change it there. */
+
+.kid-budgeted .kid-head,
+.kid-budgeted .kid-head-tap {
+  height: var(--card-head);
+  min-height: var(--card-head);
+  margin-bottom: 0;
+}
+
+.kid-budgeted .kid-bunting {
+  height: var(--card-foot);
+  margin: 0;
+}
+
+.kid-budgeted .kid-headline {
+  height: var(--card-headline);
+  margin: 0;
+  line-height: var(--card-headline);
+}
+
+.kid-budgeted .row,
+.kid-budgeted .empty-drawn {
+  height: var(--card-row);
+  margin: 0;
+}
+
+.kid-budgeted .row-time {
+  width: var(--col-time);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* "+2 more": the rest of the list, one tap away. */
+.row-more-tap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 0 0 8px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-align: left;
+}
+
+.row-more {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* What a parent said yes to today. Hidden at zero, and the first thing to
+   go when the card has no room: it is good news, not information. */
+.kid-foot {
+  flex: none;
+  height: var(--card-foot);
+  /* Pinned to the card's bottom, outside the to-do list: it never scrolls
+     away, and the list's fade sits above it. */
+  margin: auto 0 0 0;
+  color: var(--ink-good);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  line-height: var(--card-foot);
+}
+
+/* "+4 today" in the good ink; "+7 still to earn" in the muted one. */
+.kid-foot-left {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Portrait: the same grid, two cards of 352. The place is not drawn at all,
+   and the name drops a size so the head holds the balance beside it. The
+   time column stays 96: at the 20px floor "10:30 am" is 82px, and a column
+   that cuts the am/pm off a time has stopped saying when. */
+@media (orientation: portrait) {
+  .kid-budgeted .row .hide-under-120 {
+    display: none;
+  }
+
+  .kid-budgeted .kid-name {
+    font-family: var(--display);
+    font-size: var(--t-heading);
+  }
+}
+
+/* -- points and claims ---------------------------------------------------- */
+
+/* The head is tappable in v2: it opens that kid's own card. The button is
+   stripped back to the row it already was, because a child taps their own
+   face and name, not a control. */
+/* The face and the name are one target, 64px rather than 44: it is the way
+   into a child's own screen and the thing they aim at from a step away, so it
+   gets the avatar's own height rather than the minimum a finger needs. The
+   press state is the button's only decoration — a 2% darken for 80ms, enough
+   to say the tap landed on an iPad that takes a moment to redraw. */
+.kid-head-tap {
+  width: 100%;
+  margin: 0 0 var(--unit);
+  padding: 0 var(--unit);
+  margin-left: calc(var(--unit) * -1);
+  border: 0;
+  border-radius: var(--r-button);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  min-height: 64px;
+  transition: background-color 80ms ease-out;
+}
+
+.kid-head-tap:active {
+  background: color-mix(in srgb, var(--fg) 2%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kid-head-tap {
+    transition: none;
+  }
+}
+
+.balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  padding-left: var(--gap);
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: var(--weight-display);
+  color: var(--kid-ink);
+  white-space: nowrap;
+}
+
+/* In kid mode it is what they came to look at, so it is the largest thing
+   on the card after their name. */
+.balance-large {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  line-height: 1.05;
+}
+
+.balance-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The one place --good appears on the dashboard besides the bounce: a run of
+   days long enough to be worth saying out loud. */
+.balance-flame {
+  color: var(--ink-good);
+  flex: none;
+}
+
+/* One bounce, 600ms, when the number changes and only then. The element is
+   remounted on a change, which is what starts it; nothing else on this screen
+   moves. */
+.balance-points[data-bump] {
+  display: inline-block;
+  animation: balance-bump 600ms ease-out 1;
+}
+
+@keyframes balance-bump {
+  0% {
+    transform: scale(1);
+    color: var(--kid-ink);
+  }
+  35% {
+    transform: scale(1.18);
+    color: var(--ink-good);
+  }
+  100% {
+    transform: scale(1);
+    color: var(--kid-ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .balance-points[data-bump] {
+    animation: none;
+  }
+}
+
+/* Routines — Morning, After school, Evening.
+   A list of chores is a list; the same chores in the three parts of a day are
+   a routine, and a child can see where they are in it without reading every
+   row. The container matching the hour is open, the others are one line each,
+   which is what keeps three headings cheaper than the rows they replace. */
+
+.routine {
+  margin-top: 4px;
+}
+
+/* The line under the name: how many things, and the next one. */
+.kid-headline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--unit);
+  margin: 0 0 var(--unit) 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The headline gives way to the count beside it. Inside it, the kept half
+   (the news, and what today is worth) never shrinks; the count after it is
+   what ellipsises when the line is short. */
+.kid-headline-what {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  /* One line. The count wraps to a second one, out of sight, when there is
+     not room for at least "· 6 things" of it — dropped whole rather than
+     squeezed to nothing. */
+  height: 1lh;
+}
+
+.kid-headline-keep {
+  /* Shrinks only once the count has gone to the hidden line, and then ends
+     in an ellipsis rather than a cut letter. */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kid-headline-rest {
+  flex: 1 1 0;
+  min-width: 7em;
+}
+
+.kid-headline .more {
+  flex: none;
+  margin: 0;
+}
+
+/* Under ten points the card says what to do rather than what the number is. */
+.balance-start {
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.row-decide {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  margin-left: auto;
+  padding-left: var(--gap);
+  flex: none;
+}
+
+.row-no,
+.row-yes {
+  min-width: 88px;
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 0;
+  border-radius: var(--r-button);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+}
+
+.row-no {
+  background: transparent;
+  color: var(--muted);
+}
+
+.row-yes {
+  background: color-mix(in srgb, var(--good) 26%, transparent);
+  color: var(--fg);
+}
+
+html[data-theme='night'] .row-yes {
+  color: var(--good);
+}
+
+/* -- the playful set ------------------------------------------------------
+   Everything below exists to be enjoyed rather than read. It is deliberately
+   small: one burst, one nod, one flame and two bars. */
+
+/* The burst, over one card. Pointer-transparent, so it never takes a tap
+   from the row underneath it, and drawn nowhere until a parent says yes. */
+.confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The card has to be the canvas's containing block for that to work. */
+.kid {
+  position: relative;
+}
+
+/* The flame grows at three days, seven and fourteen. The size comes from the
+   component, because it is a property of the run rather than of the card. */
+.balance-flame-large {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--ink-good) 35%, transparent));
+}
+
+/* A birthday, on the day, on their own card. The only line on this screen
+   that is not information. */
+.kid-bunting {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  margin: 0 0 4px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--kid-ink);
+}
+
+/* Three triangles on a string, drawn rather than drawn on: a bunting image
+   would be a file to load for two days a year. */
+.bunting {
+  flex: none;
+  width: 44px;
+  height: 14px;
+  background:
+    linear-gradient(to bottom right, transparent 47%, var(--kid) 47%) 0 0 / 14px 14px no-repeat,
+    linear-gradient(to bottom left, transparent 47%, var(--festival) 47%) 15px 0 / 14px 14px
+      no-repeat,
+    linear-gradient(to bottom right, transparent 47%, var(--kid) 47%) 30px 0 / 14px 14px no-repeat;
+}
+
+/* Saturday and Sunday. The weekday takes the festival ink and the pill says
+   so, because a weekend that looks like a Tuesday with nothing on is the
+   screen failing to notice the best two days of the week. */
+.day-date-weekend {
+  color: var(--ink-festival);
+}
+
+/* -- saving for -----------------------------------------------------------
+   A balance is a number; a balance against something they want is a reason to
+   load the dishwasher. Two at most, and only on the open card: the dashboard
+   has no room for a bar apiece, which docs/later.md records. */
+
+.saving {
+  margin-top: var(--unit);
+}
+
+/* The dashboard's one bar, in the height the card can actually spare. The
+   open card's version costs 94px — a heading, a line and a 14px track with
+   room round it — and the dashboard card has 434px for everything a child
+   has on today. This is the same bar said in 40. */
+/* The dashboard's bar, under the points in the header.
+   It has no row of its own because the card has no row to give: two agenda
+   rows, an open routine and its chores come to 428 of the 434 there are. The
+   header has the room, because its height is the avatar's and the number
+   beside the name does not use all of it. Words would not fit and are not
+   needed — the glyph on the end of the track is the thing being saved for,
+   and the name and the gap are on the open card, one tap away. */
+.save-mini {
+  position: relative;
+  display: block;
+  width: 104px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+/* Inside the end of the track rather than hanging off it: the bar is a
+   measured 104px, and nothing on a card reaches past its own box. */
+.save-mini .save-glyph {
+  top: -4px;
+  right: 0;
+}
+
+.save {
+  margin-bottom: var(--unit);
+}
+
+.save-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--unit);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.save-name {
+  flex: 0 1 auto;
+}
+
+/* How many more, not how many so far: a child wants the gap. */
+.save-left {
+  flex: none;
+  color: var(--muted);
+}
+
+.save-track {
+  position: relative;
+  height: 14px;
+  margin-top: 4px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.save-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--kid);
+}
+
+/* At the end of the bar, so the thing being saved for is the thing the eye
+   lands on rather than the percentage. */
+.save-glyph {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  color: var(--kid-ink);
+}
+
+/* An empty state is drawn rather than sentenced. It only ever appears where
+   the rows would have been, so the height it takes is height nothing else
+   wanted — and an afternoon with nothing in it is a good thing, which a line
+   of grey text does not manage to say. */
+.empty-drawn {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  color: var(--kid-ink, var(--muted));
+}
+
+.meals-empty .empty-drawn {
+  color: var(--muted);
+}
+
+/* The pill: the visible way in to the parent screen.
+   It replaces the dot that used to sit after the clock. The dot said only
+   that something was up, in a place you could not act on it; the pill says
+   who the door is for, carries the count, and is where the tap goes. It is
+   the only element on DAY or NIGHT that leads anywhere a child should not,
+   which is what keeps that rule easy to check. */
+
+.parents {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--unit);
+  min-height: var(--tap);
+  margin-left: var(--gap);
+  padding: 0 var(--gap);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  color: var(--fg);
+  font-family: var(--body);
+  /* 20px is the floor for anything on a screen the family reads. */
+  font-size: var(--t-body);
+}
+
+.parents-glyph {
+  color: var(--muted);
+}
+
+/* Signed in: the same pill, saying so, with Done beside it. A parent should
+   never have to wonder whether the screen is still theirs. */
+.parents-on {
+  color: var(--fg);
+}
+
+.parents-open,
+.parents-done {
+  min-height: var(--tap);
+  padding: 0 var(--unit);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.parents-done {
+  color: var(--muted);
+}
+
+.parents-sep {
+  color: var(--muted);
+}
+
+/* The count, where the tap is. Paper on the green rather than green on the
+   paper: a number is a word, and a word wants the full contrast. */
+.parents-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-good);
+  color: var(--card);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* At night it stops asking to be looked at, but it still has to be readable:
+   a blanket 40% took it to 1.46:1, which is a smudge, not a quiet control.
+   The night palette's muted ink is already tuned for that screen. */
+html[data-theme='night'] .parents {
+  background: transparent;
+  color: var(--muted);
+}
+
+html[data-theme='night'] .parents-glyph {
+  color: var(--muted);
+}
+
+/* -- today and tomorrow ---------------------------------------------------
+   Two equal cards at the foot of the screen: a head line and three meals.
+   Class names are prefixed dp- because .plan-* already belongs to the parent
+   meals editor, and a name shared between two stylesheets is how a chip once
+   ended up in the corner of every screen. */
+
+.day-bottom {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+/* 7px of padding and the hairline: 168 less a 32px head and three 40px
+   rows. */
+.dp-card {
+  padding: 7px var(--gap);
+  border: var(--card-border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* One line, always: the day, its date, the weather and the chips. The date
+   takes what the rest leave and goes first; the weather and the chips never
+   give way. */
+.dp-head {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  height: var(--plan-head);
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dp-label {
+  flex: none;
+  color: var(--fg);
+}
+
+.dp-date,
+.dp-veg,
+.dp-temps {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.dp-temps {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+/* A block rather than a flex box, so it can end in an ellipsis. */
+.dp-chip-school {
+  display: block;
+  flex: 0 1 auto;
+  line-height: 26px;
+  border: 1px solid var(--line);
+  background: none;
+}
+
+html[data-theme='night'] .dp-chip-school {
+  color: var(--school);
+}
+
+/* The events chip is a way into the list. The target is the 44px; the head
+   is 32, so the button hangs 6px over it at each end, inside the card. */
+.dp-events {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--tap);
+  margin: -6px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 600;
+}
+
+.dp-meals {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A meal is a line: the slot, the dish, the note in what is over, and the
+   face of whoever picked it on the end. */
+.dp-meal {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  height: var(--plan-row);
+  margin: 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  white-space: nowrap;
+}
+
+.dp-meal-label {
+  flex: none;
+  width: var(--col-meal-label);
+  color: var(--muted);
+}
+
+.dp-meal .meal-name {
+  flex: 0 1 auto;
+  color: var(--fg);
+}
+
+.dp-meal-note {
+  color: var(--muted);
+}
+
+.dp-picks {
+  flex: none;
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.dp-decide {
+  flex: none;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--tint-festival);
+  color: var(--fg);
+  font-weight: 600;
+  line-height: 28px;
+}
+
+html[data-theme='night'] .dp-decide {
+  color: var(--festival);
+}
+
+.dp-pick {
+  display: inline-flex;
+  width: var(--chip-avatar);
+  height: var(--chip-avatar);
+}
+
+/* Portrait, where a half-card is 318px inside and the head line wants 400.
+   The high and low go — the header says today's, and tomorrow's is the least
+   read thing on the line — and the events chip with them: the list it opens
+   asks to be turned sideways anyway. The date keeps whatever room is over. */
+@media (orientation: portrait) {
+  .dp-head .dp-temps,
+  .dp-events {
+    display: none;
+  }
+}
+
+/* Portrait, where the header is 720 wide: the clock drops its am/pm and the
+   date says its weekday short ("Wed 23"), so the Parents pill keeps its word. */
+@media (orientation: portrait) {
+  .day-meridiem,
+  .day-date-long {
+    display: none;
+  }
+}
+
+.day-date-short {
+  display: none;
+}
+
+@media (orientation: portrait) {
+  .day-date-short {
+    display: inline;
+  }
+}
+
+/* A phone showing the dashboard: the pill is its glyph and its count. */
+@media (max-width: 599px) {
+  .day-header .parents-word {
+    display: none;
+  }
+}
+
+/* -- coming up ------------------------------------------------------------
+   The next three days, in the room the screen has over. Spans both columns;
+   a head and three 36px lines. */
+
+.cu-card {
+  align-self: start;
+  padding: 7px var(--gap);
+  border: var(--card-border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.cu-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cu-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  height: 36px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  white-space: nowrap;
+}
+
+.cu-day {
+  flex: none;
+  width: var(--col-meal-label);
+  color: var(--muted);
+}
+
+/* Everything on, in one clamped line: a glance, with the list for the rest. */
+.cu-events {
+  flex: 1 1 0;
+}
+
+/* Inline text rather than boxes, so the clamp cuts a title where the room
+   ends instead of dropping a whole item and leaving the room empty. */
+.cu-item {
+  margin-right: var(--gap);
+}
+
+.cu-item .avatar {
+  display: inline-flex;
+  margin-right: 6px;
+  vertical-align: -4px;
+}
+
+.cu-time,
+.cu-nothing {
+  margin-right: 6px;
+  color: var(--muted);
+}
+
+.cu-dinner {
+  flex: 0 1 auto;
+  max-width: 34%;
+  color: var(--muted);
+}
+
+.cu-glyph {
+  margin-right: 6px;
+  vertical-align: -4px;
+}
+
+/* -- my week ---------------------------------------------------------------
+   Seven 10px dots on their own 16px line under the headline, one a day from
+   today. */
+
+.kid-week-line {
+  display: flex;
+  align-items: center;
+  height: var(--card-week);
+  margin: 0 0 var(--unit) 0;
+}
+
+.kid-budgeted .kid-week-line {
+  margin: 0;
+}
+
+.kid-week {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  /* Reaches past the 16px line to a finger's 44px without moving it. */
+  height: var(--tap);
+  margin: -14px 0 -14px calc(-1 * var(--unit));
+  padding: 0 var(--unit);
+  border: 0;
+  border-radius: var(--r-button);
+  background: none;
+}
+
+.kid-week-dot {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--line);
+  border-radius: var(--r-pill);
+  box-sizing: border-box;
+}
+
+.kid-week-filled {
+  border-color: var(--kid);
+  background: var(--kid);
+}
+
+/* Contested: the ring, in the festival colour the rest of the app gives
+   "Mom or Dad picks". */
+.kid-week-contested {
+  border-color: var(--festival);
+  background: none;
+}
+
+/* Contested, the faces carry the festival ring too; upright, where a
+   318px card cannot hold the words beside the dish and two faces, the ring
+   is how the row says it, and the words step aside. */
+.dp-picks-contested .dp-pick {
+  border-radius: var(--r-pill);
+  box-shadow: 0 0 0 2px var(--festival);
+}
+
+@media (orientation: portrait) {
+  .dp-decide {
+    display: none;
+  }
+}
+
+.dp-meal-empty {
+  /* A placeholder: the faint ink, there to be skipped. */
+  color: var(--faint);
+}
+
+/* The greeting: with the names where there is room, "Good morning" where
+   there is not. */
+.hello-short {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .day-hello:has(.hello-short) .hello-long {
+    display: none;
+  }
+
+  .hello-short {
+    display: inline;
+  }
+}
+
+/* A meal eaten out: the storefront in the festival colour before the name,
+   and on a vegetarian day the leaf after it, so the reminder goes with the
+   booking. */
+.meal-out-glyph {
+  flex: none;
+  margin-right: 6px;
+  color: var(--festival);
+}
+
+.meal-out-leaf {
+  flex: none;
+  margin-left: 6px;
+  color: var(--ink-school);
+}
+
+.fam-none-glyph {
+  margin-right: 6px;
+  vertical-align: -3px;
+}
+
+/* 60 to 160px left under the cards: the meal rows give 6px each (18 in
+   all), and a two-day Coming up, with no title row, fits in the rest. */
+.day-compact-meals {
+  --plan-row: 34px;
+  --day-bottom: 150px;
+}
+
+.cu-card-compact .cu-row {
+  height: 24px;
+}
+
+/* -- to-do chips ------------------------------------------------------------
+   Every to-do of the day as one wrapping row: 44px pills, 10px apart, a
+   12px ring at the left and what it is worth at the right. The system sans
+   throughout; Nunito is never used inside a chip. */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip-task {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: var(--tap);
+  padding: 0 14px 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--chip-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* In kid mode the whole chip is the button. */
+.chip-task:has(> .chip-task-tap) {
+  padding: 0;
+}
+
+.chip-task-tap {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: var(--tap);
+  margin: 0;
+  padding: 0 14px 0 12px;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.chip-task-ring {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 2px var(--chip-ring);
+}
+
+.chip-task-lock {
+  flex: none;
+  margin-right: 6px;
+  color: var(--chip-worth);
+}
+
+.chip-task-title {
+  min-width: 0;
+}
+
+.chip-task-worth {
+  flex: none;
+  margin-left: 10px;
+  font-size: var(--t-caption);
+  font-weight: 600;
+  color: var(--chip-worth);
+}
+
+/* Waiting on a parent: the kid's tint, a 2px border in their colour, and
+   the words in their ink — the one darkened to read on the tint. */
+.chip-task-claimed {
+  background: var(--kid-tint);
+  box-shadow: inset 0 0 0 2px var(--kid);
+  color: var(--kid-chip-ink);
+}
+
+.chip-task-claimed .chip-task-ring {
+  box-shadow: inset 0 0 0 2px var(--kid);
+}
+
+.chip-task-claimed .chip-task-worth {
+  color: var(--kid-chip-ink);
+}
+
+/* Approved: the good green, the ring a filled disc with a white tick. */
+.chip-task-approved {
+  background: var(--good-bg);
+  box-shadow: inset 0 0 0 1px var(--good-line);
+}
+
+.chip-task-tick {
+  background: var(--good);
+  box-shadow: none;
+  color: #ffffff;
+}
+
+.chip-task-approved .chip-task-worth {
+  color: var(--good-ink-chip);
+}
+
+/* Declined: no fill, the title dimmed, the worth struck through. */
+.chip-task-declined {
+  background: none;
+  color: var(--chip-dim);
+}
+
+.chip-task-declined .chip-task-worth {
+  color: var(--chip-dim);
+  text-decoration: line-through;
+}
+
+/* More chips than the band holds at body size: every title at caption size,
+   the chip still 44px tall (budget.ts, chipsFor). */
+.chips-dense .chip-task {
+  font-size: var(--t-caption);
+}
+
+/* Wider than the card on one line: two lines of caption, in the chip. */
+.chip-task-long {
+  white-space: normal;
+  font-size: var(--t-caption);
+  line-height: 18px;
+}
+
+.chip-task-long .chip-task-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.chip-task-deciding .row-decide {
+  margin-left: 10px;
+}

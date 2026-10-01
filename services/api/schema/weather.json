@@ -1,0 +1,137 @@
+{
+  "$defs": {
+    "WeatherDay": {
+      "properties": {
+        "high": {
+          "title": "High",
+          "type": "number"
+        },
+        "icon": {
+          "title": "Icon",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "low": {
+          "title": "Low",
+          "type": "number"
+        },
+        "precip_pct": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Precip Pct"
+        },
+        "sunrise": {
+          "title": "Sunrise",
+          "type": "string"
+        },
+        "sunset": {
+          "title": "Sunset",
+          "type": "string"
+        }
+      },
+      "required": [
+        "high",
+        "low",
+        "sunrise",
+        "sunset",
+        "label",
+        "icon"
+      ],
+      "title": "WeatherDay",
+      "type": "object"
+    },
+    "WeatherNow": {
+      "properties": {
+        "icon": {
+          "title": "Icon",
+          "type": "string"
+        },
+        "is_day": {
+          "title": "Is Day",
+          "type": "boolean"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "temp": {
+          "title": "Temp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "temp",
+        "label",
+        "icon",
+        "is_day"
+      ],
+      "title": "WeatherNow",
+      "type": "object"
+    }
+  },
+  "description": "Empty and stale until the first fetch succeeds; never an error.",
+  "properties": {
+    "fetched_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fetched At"
+    },
+    "now": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WeatherNow"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "stale": {
+      "default": true,
+      "title": "Stale",
+      "type": "boolean"
+    },
+    "today": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WeatherDay"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "tomorrow": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WeatherDay"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "Weather",
+  "type": "object"
+}

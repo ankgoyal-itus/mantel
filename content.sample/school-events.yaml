@@ -1,0 +1,10 @@
+# What a school feed's events do on the wall. Titles are matched as a
+# lowercase "series": grade markers and digits dropped.
+always:
+  - {match: "no school|holiday|break|recess|staff development|teacher work day"}
+  - {match: "minimum day|early release|early dismissal"}
+  - {match: "picture day|back to school|open house|conference|report card"}
+rules:
+  - {match: cross country, kids: [mira]}
+  - {match: band practice, kids: [kabir]}
+default: hide

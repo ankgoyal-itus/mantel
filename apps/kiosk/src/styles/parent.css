@@ -1,0 +1,1659 @@
+/* Parent mode: a settings app on the kiosk's own paper.
+
+   The one screen in the app that scrolls, and the one read at arm's length
+   rather than across a room, so its type is smaller than the wall's — titles
+   24, row labels 18, descriptions 16, and nothing under 16. Everything is a
+   token, so it is paper by day and the dark after hours like the rest of the
+   kiosk: it was pinned to the night palette, with literals written for it.
+
+   The PIN pad and the choice chips come first. The pad is drawn over
+   whichever screen asked for it, and the chips are shared with the kid
+   screens (the jar sheet, the picker's "+ chicken"), so both outlive the
+   screen this file is named for. */
+
+/* Parent mode. Always the dim palette, and the one screen in the app that is
+   allowed to scroll: it is a utility, not something read from the sofa.
+
+   The PIN pad is the exception and always was: it is drawn over whichever
+   screen asked for it, so by day it stands on paper and by night on the dark.
+   It was written in hard-coded dark, which on the light theme put near-black
+   letters on a near-black card — 1.23:1, invisible. Everything down to
+   the shake is tokens now. Below that, parent mode proper is pinned to the
+   night palette by Shell.tsx and its literals are correct there. */
+
+.pin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The screen it was opened over, nearly hidden: the day's paper or the
+     night's dark at 92%, blurred, so the pad reads as part of this screen and
+     not a hole punched in it. */
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.pin-card {
+  /* Fits a phone as well as an iPad: 420 where there is room, otherwise the
+     window less a margin. */
+  width: min(420px, calc(100% - 32px));
+  padding: 28px;
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-float);
+  text-align: center;
+}
+
+.pin-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--unit);
+  margin: 0 0 8px 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+}
+
+/* The lock in the accent: the good ink, which is no child's. */
+.pin-lock {
+  color: var(--ink-good);
+}
+
+/* On the card, the lighter of the two surfaces, where --muted has its
+   contrast to spare. A caption: what the pad wants, under whose it is. */
+.pin-prompt {
+  margin: 0;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+/* Four 12px dots, a ring until a digit fills it. */
+.pin-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+.pin-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--muted);
+  border-radius: var(--r-pill);
+  box-sizing: border-box;
+}
+
+.pin-dot-on {
+  border-color: var(--fg);
+  background: var(--fg);
+}
+
+/* Said, not alarmed: the kids get this wrong while playing. */
+.pin-error {
+  margin: 0 0 12px 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--muted);
+}
+
+.pin-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.pin-key {
+  width: var(--key);
+  height: var(--key);
+  min-width: 0;
+  border: 0;
+  border-radius: var(--r-button);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+  font-size: var(--t-title);
+  font-family: var(--display);
+}
+
+.pin-key:active {
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+}
+
+/* Backspace: a glyph, so it needs no room for a word. */
+.pin-key-back {
+  color: var(--muted);
+}
+
+/* The empty corner of the pad. */
+.pin-blank {
+  display: block;
+}
+
+/* Open: across the card, in the accent — the good colour as a wash with the
+   page's ink on it, the parent screen's own yes. */
+.pin-go {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: var(--r-button);
+  background: color-mix(in srgb, var(--good) 26%, transparent);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+}
+
+.pin-go:disabled {
+  opacity: 0.5;
+}
+
+/* Cancel, Back: a word, not a button to weigh against the other. The page's
+   ink, since --muted on the card has no contrast to spare at this size. */
+.pin-text {
+  display: block;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  margin: 8px auto 0;
+  padding: 0 var(--gap);
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* One shake of the dots, 200ms, six pixels. No colour change: an alarm
+   teaches a child they have broken something. */
+@keyframes pin-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+.pin-dots[data-shake] {
+  animation: pin-shake 200ms ease-in-out 1;
+}
+
+/* The two keypads (components/Keypad.tsx). A parent's dots fill in the
+   accent; a kid's ring and fill in their colour, their name is in their
+   ink, and Open is their colour as a wash. */
+.keypad-parent .pin-dot-on {
+  border-color: var(--good);
+  background: var(--good);
+}
+
+.keypad-kid .pin-dot {
+  border-color: var(--kid);
+}
+
+.keypad-kid .pin-dot-on {
+  background: var(--kid);
+}
+
+.keypad-name {
+  color: var(--kid-chip-ink, var(--kid-ink));
+}
+
+.keypad-kid .pin-go {
+  background: color-mix(in srgb, var(--kid) 26%, transparent);
+}
+
+/* A right code: the pad fades into the screen behind it. */
+@keyframes keypad-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+.keypad-leaving {
+  animation: keypad-leave 200ms ease-out 1 forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keypad-leaving {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* Both decisions are the same size and the same weight. Approving is the one
+   that is coloured, but declining is not a lesser button: a parent saying no
+   is answering, not failing to answer. */
+.decide {
+  flex: none;
+  min-width: 128px;
+  min-height: 56px;
+  padding: 0 var(--gap);
+  border: 1px solid color-mix(in srgb, var(--fg) 24%, transparent);
+  border-radius: var(--r-card);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+}
+
+.decide-yes {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--good) 22%, transparent);
+  color: var(--good);
+}
+
+.decide:disabled {
+  opacity: 0.5;
+}
+
+/* -- choices: who, what for, how much -------------------------------------
+   Not ".chip": index.css already has one, and it is absolutely positioned. */
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit);
+  margin-top: var(--unit);
+}
+
+.choice {
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 1px solid color-mix(in srgb, var(--fg) 24%, transparent);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.choice-on {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--kid, var(--fg)) 28%, transparent);
+  font-weight: 700;
+}
+
+/* Said on the pad because only a parent ever opens it. */
+.pin-waiting {
+  margin: 0 0 var(--unit);
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-align: center;
+}
+
+.choices-centre {
+  justify-content: center;
+}
+
+/* Mantel on a phone: the parent screen filling the window, and a way back.
+   The kiosk stage is sized in pixels for a wall; here the page scrolls like
+   a page, because that is what a phone is for. */
+
+.parent-app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* -- the frame ------------------------------------------------------------
+   A 240px rail and a pane, from 900px up. Below that the rail is a bar of
+   glyphs along the bottom, and the pane is the whole width. */
+
+.pp {
+  display: grid;
+  grid-template-columns: var(--pp-rail) minmax(0, 1fr);
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+}
+
+.pp-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--pad) 12px;
+  border-right: var(--card-border);
+  background: var(--card);
+  overflow-y: auto;
+}
+
+.pp-family {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit);
+  padding: 0 12px;
+}
+
+.pp-family-name {
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: var(--weight-display);
+}
+
+.pp-faces {
+  display: flex;
+  gap: 6px;
+}
+
+.pp-face {
+  display: inline-flex;
+}
+
+.pp-session {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-sections {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pp-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--pp-rail-row);
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-button);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-align: left;
+}
+
+.pp-section-glyph {
+  flex: none;
+  color: var(--muted);
+}
+
+.pp-section-on {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  font-weight: 700;
+}
+
+.pp-section-on .pp-section-glyph {
+  color: var(--fg);
+}
+
+/* What waits, where the tap is. Paper on the green: a number is a word. */
+.pp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink-good);
+  color: var(--card);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-done-row {
+  margin-top: auto;
+}
+
+.pp-pane {
+  position: relative;
+  padding: var(--pad) 32px 48px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pp-phone-bar {
+  display: none;
+}
+
+.pp-pane-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-card-gap);
+  max-width: 960px;
+}
+
+.pp-pane-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gap);
+}
+
+.pp-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.pp-description {
+  margin: 4px 0 0;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-pane-action {
+  flex: none;
+}
+
+/* -- cards and rows ------------------------------------------------------- */
+
+.pp-card {
+  padding: var(--gap);
+  border: var(--card-border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+}
+
+.pp-card-title {
+  margin: 0 0 var(--unit);
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+}
+
+/* A label on the left, the control on the right. */
+.pp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  min-height: 56px;
+  padding: 6px 0;
+}
+
+.pp-row + .pp-row {
+  border-top: 1px solid var(--line);
+}
+
+.pp-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pp-row-label {
+  font-family: var(--body);
+  font-size: var(--t-body);
+  color: var(--fg);
+}
+
+.pp-row-note {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-row-control {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--unit);
+  margin-left: auto;
+}
+
+.pp-muted {
+  margin: 0;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-bad {
+  margin: 0;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--ink-bad);
+}
+
+.pp-line {
+  margin: 4px 0;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.pp-subhead {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+}
+
+/* -- controls: every one 44px, and every one a real control --------------- */
+
+.pp-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--unit);
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* The yes: the good colour as a wash, with the page's ink on it, which is
+   the dashboard's own Yes. */
+.pp-button-accent {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--good) 26%, transparent);
+}
+
+.pp-button-bad {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--ink-bad) 14%, transparent);
+  color: var(--ink-bad);
+}
+
+.pp-button:disabled,
+.pp-text-button:disabled,
+.pp-step:disabled {
+  opacity: 0.5;
+}
+
+.pp-text-button {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pp-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-button);
+  background: none;
+  color: var(--fg);
+}
+
+/* A switch: the track is the colour, the knob says which end. It saves as it
+   flips, so it does not slide — there is nothing to watch. */
+.pp-switch {
+  position: relative;
+  width: 60px;
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.pp-switch::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 2px;
+  left: 2px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--fg) 22%, transparent);
+}
+
+.pp-switch-on::before {
+  background: var(--ink-good);
+}
+
+.pp-switch-knob {
+  position: absolute;
+  top: 11px;
+  left: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--card);
+}
+
+.pp-switch-on .pp-switch-knob {
+  left: 33px;
+}
+
+.pp-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pp-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--fg);
+}
+
+.pp-step-value {
+  min-width: 80px;
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* 18px, not less: iOS zooms the page into any field under 16. */
+.pp-input {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.pp-input-time {
+  width: 150px;
+}
+
+.pp-input-short {
+  width: 200px;
+}
+
+.pp-input-pin {
+  width: 100px;
+  letter-spacing: 4px;
+}
+
+.pp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: var(--unit) 0;
+}
+
+.pp-swatch {
+  width: 60px;
+  height: var(--tap);
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: var(--card);
+}
+
+.pp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit);
+  margin: var(--unit) 0;
+}
+
+.pp-chip {
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.pp-chip-on {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--kid, var(--fg)) 22%, transparent);
+  font-weight: 700;
+}
+
+/* -- approvals ------------------------------------------------------------ */
+
+.pp-group {
+  padding-top: var(--unit);
+  padding-bottom: var(--unit);
+}
+
+.pp-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: var(--unit) 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+  color: var(--kid-ink, var(--fg));
+}
+
+.pp-group-glyph {
+  color: var(--muted);
+}
+
+.pp-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 72px: the thing, when, and the two answers. */
+.pp-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  min-height: var(--pp-item);
+  padding: var(--unit) 0;
+  border-top: 1px solid var(--line);
+}
+
+.pp-todo .pp-item {
+  min-height: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+.pp-item-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pp-item-what {
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.pp-item-when {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-item-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--unit);
+}
+
+/* A decided row fades out, once, in 200ms: the one motion on this screen,
+   and the thing that says the tap did something before the list redraws. */
+.pp-item-leaving {
+  animation: pp-leave 200ms ease-out forwards;
+}
+
+@keyframes pp-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-item-leaving {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.pp-decide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit);
+  width: 100%;
+}
+
+.pp-decide-title {
+  font-weight: 700;
+}
+
+.pp-decide-choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit);
+}
+
+.pp-choice {
+  max-width: 100%;
+}
+
+.pp-decide-dishes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.pp-decide-dish {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+}
+
+.pp-decided {
+  padding: var(--unit) 0;
+}
+
+.pp-faces-inline {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.pp-chip-face {
+  display: inline-flex;
+}
+
+.pp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--unit);
+  padding: 32px var(--gap);
+  color: var(--muted);
+}
+
+.pp-empty-text {
+  margin: 0;
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* -- meals ---------------------------------------------------------------- */
+
+.pp-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pp-week-label {
+  min-width: 120px;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+  text-align: center;
+}
+
+.pp-week {
+  display: grid;
+  grid-template-columns: 72px repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pp-week-slots,
+.pp-week-day {
+  display: grid;
+  grid-template-rows: 32px repeat(3, 96px);
+  gap: 6px;
+}
+
+.pp-week-slot {
+  display: flex;
+  align-items: center;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-week-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 700;
+}
+
+.pp-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  color: var(--fg);
+  font-family: inherit;
+  text-align: left;
+  overflow: hidden;
+}
+
+/* Two children, two dishes: the festival colour as a ring, the same meaning
+   the wall gives "Parents decide". */
+.pp-cell-contested {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--festival);
+}
+
+/* Today's column, in the screen's one neutral accent: the good colour as a
+   wash, which is no child's. */
+.pp-week-today .pp-week-head {
+  border-radius: var(--r-button);
+  background: color-mix(in srgb, var(--good) 26%, transparent);
+}
+
+.pp-week-today .pp-cell {
+  border-color: color-mix(in srgb, var(--good) 60%, var(--line));
+}
+
+.pp-cell-empty {
+  color: var(--muted);
+}
+
+.pp-cell {
+  position: relative;
+}
+
+/* The cell is the control, so it needs no pen: a ring in the page's ink
+   while it is pressed, the kid-neutral one. */
+.pp-cell:active {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--fg) 45%, transparent);
+}
+
+.pp-cell-slot {
+  display: none;
+}
+
+.pp-cell-dish {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  line-height: 1.2;
+}
+
+.pp-cell-plan {
+  max-width: 100%;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-diet-line {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  margin: 0;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-plan-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 56px;
+  margin: 0 0 var(--unit);
+  padding: var(--unit) 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: none;
+  color: var(--fg);
+  font-family: inherit;
+  text-align: left;
+}
+
+.pp-sheet-decide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit);
+  margin-bottom: 12px;
+}
+
+/* The kid picker's list, inside a parent's sheet: the reasons a child could
+   not choose a dish stay on as warnings. */
+.picker-parent .pick-warn {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--ink-festival);
+}
+
+/* -- events --------------------------------------------------------------- */
+
+.pp-feed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--unit);
+}
+
+.pp-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--muted);
+}
+
+.pp-dot-ok {
+  background: var(--good);
+}
+
+.pp-dot-stale {
+  background: var(--festival);
+}
+
+.pp-dot-error {
+  background: var(--ink-bad);
+}
+
+.pp-state {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-state-ok {
+  color: var(--ink-good);
+}
+
+.pp-state-stale {
+  color: var(--ink-festival);
+}
+
+.pp-state-error {
+  color: var(--ink-bad);
+}
+
+/* A long list's group name stays in view while its rows scroll under it. */
+.pp-school-head,
+.pp-compact-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: var(--unit) 0;
+  background: var(--card);
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 700;
+}
+
+/* Long lists — the diet's festivals, the school's event series — in
+   compact 44px rows. */
+.pp-school .pp-row,
+.pp-compact .pp-row {
+  min-height: var(--tap);
+  padding: 2px 0;
+}
+
+/* A card that holds one row is 64px, not padded to look like its
+   neighbours. */
+.pp-card:has(> .pp-row:only-child) {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.pp-kid-toggles {
+  display: flex;
+  gap: var(--unit);
+}
+
+.pp-kid-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 12px 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.pp-kid-toggle-on {
+  border-color: transparent;
+  background: var(--kid-tint, color-mix(in srgb, var(--fg) 10%, transparent));
+  font-weight: 700;
+}
+
+.pp-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+/* -- photos --------------------------------------------------------------- */
+
+.pp-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--pp-thumb));
+  gap: var(--unit);
+}
+
+.pp-thumb {
+  width: var(--pp-thumb);
+  height: var(--pp-thumb);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.pp-thumb img,
+.pp-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pp-preview {
+  height: auto;
+  max-height: 55vh;
+  border-radius: var(--r-button);
+  object-fit: contain;
+}
+
+/* -- points --------------------------------------------------------------- */
+
+.pp-kid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--pp-card-gap);
+}
+
+.pp-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--unit);
+  margin: 0;
+}
+
+.pp-stats dt {
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  color: var(--muted);
+}
+
+.pp-stats dd {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* In a half-width card the label and the payment do not share a line: the
+   amount and Paid go under "Cash owed", still at the right. */
+.pp-cash {
+  margin-top: var(--unit);
+  border-top: 1px solid var(--line);
+}
+
+.pp-cash .pp-row {
+  flex-wrap: wrap;
+}
+
+.pp-cash .pp-row-text {
+  flex-basis: 100%;
+}
+
+.pp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.pp-table th {
+  padding: var(--unit) var(--unit) var(--unit) 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+}
+
+.pp-table td {
+  padding: 10px var(--unit) 10px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.pp-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pp-table th.pp-num {
+  text-align: right;
+}
+
+.pp-earned {
+  color: var(--ink-good);
+}
+
+.pp-nowrap {
+  white-space: nowrap;
+}
+
+.pp-digest + .pp-digest {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.pp-digest h3 {
+  margin: 0;
+}
+
+/* -- settings ------------------------------------------------------------- */
+
+.pp-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 0 12px;
+}
+
+.pp-day {
+  min-width: 56px;
+  min-height: var(--tap);
+  border: 1px solid var(--line);
+  border-radius: var(--r-button);
+  background: none;
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+}
+
+.pp-day-on {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--good) 26%, transparent);
+  font-weight: 700;
+}
+
+.pp-extra-add {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  align-items: end;
+  gap: var(--unit);
+}
+
+.pp-kid-settings + .pp-kid-settings {
+  margin-top: var(--gap);
+  border-top: 1px solid var(--line);
+}
+
+.pp-avatar-button {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+}
+
+.pp-avatars {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 64px);
+  gap: var(--unit);
+}
+
+.pp-avatar-choice {
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--r-card);
+  background: none;
+}
+
+.pp-avatar-on {
+  box-shadow: inset 0 0 0 2px var(--fg);
+}
+
+/* -- about ---------------------------------------------------------------- */
+
+.pp-lan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pad);
+}
+
+.pp-lan-text p {
+  margin: 0;
+}
+
+.pp-lan-url {
+  margin: 4px 0;
+  font-family: var(--display);
+  font-size: var(--t-title);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.qr {
+  flex: none;
+  border-radius: var(--r-button);
+}
+
+/* -- the sheet and the toast ---------------------------------------------- */
+
+.pp-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pad);
+  background: var(--scrim);
+}
+
+.pp-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: 100%;
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.pp-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: var(--unit) var(--unit) var(--unit) 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.pp-sheet-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: 600;
+}
+
+.pp-sheet-body {
+  padding: var(--gap) 20px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pp-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: var(--gap);
+}
+
+/* At the foot of the pane, over whatever is scrolled beneath it. The ink as
+   the surface and the card as the word: a toast is read in passing. */
+.pp-toast {
+  position: sticky;
+  bottom: var(--gap);
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: var(--unit);
+  padding: 10px var(--gap);
+  border-radius: var(--r-pill);
+  background: var(--fg);
+  color: var(--card);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  box-shadow: var(--shadow-float);
+}
+
+.pp-toast-bad {
+  background: var(--ink-bad);
+}
+
+.pp-escape {
+  align-self: center;
+}
+
+/* -- a phone -------------------------------------------------------------- */
+
+@media (max-width: 899px) {
+  .pp {
+    grid-template-rows: minmax(0, 1fr) var(--pp-tabbar);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pp-rail {
+    grid-row: 2;
+    flex-direction: row;
+    padding: 0 4px;
+    border-top: var(--card-border);
+    border-right: 0;
+    overflow: visible;
+  }
+
+  .pp-family,
+  .pp-done-row {
+    display: none;
+  }
+
+  .pp-section-label {
+    font-family: var(--body);
+    font-size: var(--t-caption);
+    line-height: 1.2;
+  }
+
+  .pp-sections {
+    flex-direction: row;
+  }
+
+  .pp-sections li {
+    flex: 1;
+  }
+
+  .pp-section {
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: var(--pp-tabbar);
+    padding: 0;
+    border-radius: 0;
+  }
+
+  /* The active tab in the accent — the good ink, which is no child's — and
+     no pill behind it: the colour is the marker. */
+  .pp-section-on {
+    background: none;
+    color: var(--ink-good);
+  }
+
+  .pp-section-on .pp-section-glyph {
+    color: var(--ink-good);
+  }
+
+  .pp-badge {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 4px);
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+  }
+
+  .pp-pane {
+    padding: 0 var(--gap) 32px;
+  }
+
+  .pp-phone-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 calc(var(--gap) * -1) var(--gap);
+    padding: 4px var(--unit) 4px var(--gap);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .pp-phone-title {
+    font-family: var(--body);
+    font-size: var(--t-caption);
+    color: var(--muted);
+  }
+
+  .pp-pane-head,
+  .pp-row,
+  .pp-item {
+    flex-wrap: wrap;
+  }
+
+  .pp-item-actions {
+    margin-left: auto;
+  }
+
+  /* The week, down the phone: each day a block, each meal a line. */
+  .pp-week {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pp-week-slots {
+    display: none;
+  }
+
+  .pp-week-day {
+    grid-template-rows: auto;
+  }
+
+  .pp-week-head {
+    justify-content: flex-start;
+  }
+
+  .pp-cell {
+    flex-direction: row;
+    align-items: center;
+    min-height: 56px;
+    gap: var(--unit);
+  }
+
+  .pp-cell-slot {
+    display: inline;
+    flex: none;
+    width: 80px;
+    font-family: var(--body);
+    font-size: var(--t-caption);
+    color: var(--muted);
+  }
+
+  .pp-extra-add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pp-scrim {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .pp-sheet {
+    width: 100%;
+    max-height: 90%;
+    border-radius: var(--pp-radius) var(--pp-radius) 0 0;
+  box-shadow: var(--shadow-float);
+}
+}
+
+/* Lunch out and Dinner out, first in the meal sheet: a row, then where. */
+.pp-out {
+  margin-bottom: var(--gap);
+}
+
+.pp-out-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--unit);
+}
+
+.pp-out-where {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit);
+  margin-top: var(--unit);
+}
+
+/* An empty tab: one line and one small drawing from the same set. */
+.pp-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.pp-empty-glyph {
+  flex: none;
+}

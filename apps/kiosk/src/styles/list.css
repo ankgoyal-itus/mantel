@@ -1,0 +1,207 @@
+/* The agenda across every calendar, sixty days of it.
+   This screen scrolls, and it is the only one besides the parent screen that
+   does — a list is read by scrolling it. */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.li-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  padding: var(--gap) var(--pad);
+  border-bottom: 1px solid var(--line);
+}
+
+.li-segments {
+  display: flex;
+  flex: none;
+  border: var(--card-border);
+  border-radius: var(--r-button);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.li-segment {
+  min-height: var(--tap);
+  padding: 0 var(--gap);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+.li-segment-on {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  color: var(--fg);
+}
+
+.li-chips {
+  flex: 1;
+  display: flex;
+  gap: var(--unit);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.li-chip {
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* On, in whatever the chip stands for. */
+.li-chip-on {
+  border-color: var(--chip, var(--fg));
+  color: var(--chip, var(--fg));
+}
+
+.li-done {
+  flex: none;
+  min-height: var(--tap);
+  padding: 0 var(--pad);
+  border: 0;
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+
+.li-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 var(--pad) var(--pad);
+}
+
+.li-day {
+  padding-top: var(--unit);
+}
+
+/* Sticky, so you always know which day you are looking at. */
+.li-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap);
+  padding: var(--unit) 0 4px;
+  background: var(--bg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.li-mark {
+  font-weight: 600;
+}
+
+.li-row {
+  display: flex;
+  align-items: center;
+  height: var(--row);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+/* A 24px face for a kid's row, the family's glyph for everybody's. */
+.li-who {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 14px;
+}
+
+.li-family {
+  color: var(--muted);
+}
+
+/* The initial a "[Sam]" suffix became: a small disc in their ink. */
+.li-tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: var(--unit);
+  border: 2px solid var(--kid-ink, var(--muted));
+  border-radius: var(--r-pill);
+  color: var(--kid-ink, var(--fg));
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.li-time {
+  flex: none;
+  width: 150px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.li-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.li-glyph {
+  margin-left: var(--unit);
+  color: var(--ink-school);
+  flex: none;
+}
+
+.li-where {
+  margin-left: var(--gap);
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.li-empty {
+  padding-top: var(--pad);
+}
+
+/* Upright, the chips do not fit beside Month / List and Done: they take a
+   row of their own under them and wrap, rather than seven filters being cut
+   down to four. */
+@media (orientation: portrait) {
+  .li-bar {
+    flex-wrap: wrap;
+  }
+
+  .li-done {
+    margin-left: auto;
+  }
+
+  .li-chips {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,21 @@
+# The shop. Points earned from tasks.yaml are spent here.
+#
+# cost       what it takes, in points
+# fulfilment what approving it actually does:
+#              manual    a parent does the thing and ticks it off
+#              allowance schedules `days` daily reminders for a parent to pay
+#              cash      adds `dollars` to what that child is owed
+#              policy    screen time; nothing is automated, see enabled below
+# family     paid out of the family jar instead of one child's balance
+# enabled    false shows the card greyed with "Coming soon"
+version: 1
+rewards:
+  - {id: ice_cream, name: Ice cream, cost: 25, fulfilment: manual, glyph: ice-cream}
+  - {id: bakery, name: Bakery treat, cost: 40, fulfilment: manual, glyph: cake}
+  - {id: hot_chocolate, name: Hot chocolate out, cost: 40, fulfilment: manual, glyph: cup}
+  - {id: dinner_out, name: Dinner out, cost: 150, fulfilment: manual, glyph: dinner, family: true}
+  - {id: allowance_5, name: Allowance × 5 days, cost: 100, fulfilment: allowance, glyph: coin, days: 5}
+  - {id: cash_5, name: "$5 cash", cost: 50, fulfilment: cash, glyph: coin, dollars: 5}
+  # Screen time is a house rule before it is a reward: off until agreed.
+  - {id: roblox_1h, name: Roblox +1 h, cost: 100, fulfilment: policy, glyph: game, minutes: 60, enabled: false}
+  - {id: roblox_2h, name: Roblox +2 h, cost: 175, fulfilment: policy, glyph: game, minutes: 120, enabled: false}
