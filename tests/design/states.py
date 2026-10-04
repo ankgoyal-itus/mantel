@@ -696,6 +696,13 @@ WEEKLY_DAY = {
 }
 
 
+def with_shared_school_day(day: dict) -> dict:
+    """A school day both children have on their calendars: the district's
+    conference week, sent to each of them. Coming up draws it once."""
+    shared = row("Conference Week - Early Release (TK-5)", None, None, "school")
+    return {**day, "kids": [{**kid, "agenda": [shared, *kid["agenda"]]} for kid in day["kids"]]}
+
+
 def tasks_day(count: int) -> dict:
     return {**DAY, "kids": [{**DAY["kids"][0], "tasks": SEVEN_TASKS[:count]}, DAY["kids"][1]]}
 

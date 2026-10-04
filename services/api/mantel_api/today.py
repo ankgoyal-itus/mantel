@@ -93,6 +93,11 @@ def _order(entry: AgendaEntry) -> tuple[int, str, str]:
     return (0 if entry.all_day else 1, entry.start or "", entry.title.lower())
 
 
+def _same(title: str) -> str:
+    """A title as two feeds would agree on it: case and spacing aside."""
+    return " ".join(title.split()).lower()
+
+
 def merge_agenda(
     scheduled: list[AgendaEntry],
     day: Date,
@@ -104,14 +109,24 @@ def merge_agenda(
     The calendar wins: a schedule item with the same title (case-insensitive)
     and the same start is dropped in favour of the calendar's copy, so an
     activity that lives in both places is shown once.
+
+    And a calendar event is shown once however many feeds carry it: a
+    district's "Conference Days - Early Release" arrives from the district's
+    feed and again from the school's own, on the same day, under the same
+    title. The first feed listed in settings.yaml keeps it.
     """
     lookup = kinds or {}
-    from_calendar = [
-        entry_from_event(event, event.source, lookup.get(event.calendar_id))
-        for event in events or ()
-    ]
-    claimed = {(entry.title.strip().lower(), entry.start) for entry in from_calendar}
-    kept = [item for item in scheduled if (item.title.strip().lower(), item.start) not in claimed]
+    from_calendar: list[AgendaEntry] = []
+    seen: set[tuple[str, str | None]] = set()
+    for event in events or ():
+        entry = entry_from_event(event, event.source, lookup.get(event.calendar_id))
+        key = (_same(entry.title), entry.start)
+        if key in seen:
+            continue
+        seen.add(key)
+        from_calendar.append(entry)
+    claimed = {(_same(entry.title), entry.start) for entry in from_calendar}
+    kept = [item for item in scheduled if (_same(item.title), item.start) not in claimed]
     return sorted(kept + from_calendar, key=_order)
 
 

@@ -71,6 +71,7 @@ from states import (  # noqa: E402
     day_api,
     later,
     tasks_day,
+    with_shared_school_day,
 )
 
 REPO = Path(__file__).resolve().parents[2]
@@ -219,6 +220,11 @@ STATES = [
     # one still to do (its worth says "· week").
     State("day-weekly", Time(17, 0), steps=("weekly-chips",), viewports=DASHBOARD,
           api={"/api/today": WEEKLY_DAY}),
+    # Coming up with a school day both children share: drawn once, no face.
+    State("day-coming-up-shared", Time(15, 30), steps=("coming-up-once",),
+          viewports=(PORTRAIT,),
+          api={"/api/agenda": [DAY, TOMORROW_DAY, with_shared_school_day(later(DAY, 2)),
+                               later(DAY, 3)]}),
     State("day-two-tasks", Time(17, 0), steps=("all-tasks-2",),
           api={"/api/today": tasks_day(2)}, viewports=DASHBOARD),
     State("day-five-tasks", Time(17, 0), steps=("all-tasks-5",),
@@ -694,6 +700,15 @@ def run_steps(page: Page, state: State, stub: Stub) -> None:
             page.click(".kid-action >> nth=0")
             page.wait_for_selector(".shop-grid", timeout=10000)
             page.wait_for_timeout(300)
+        elif step == "coming-up-once":
+            page.wait_for_selector(".cu-card", timeout=5000)
+            found = page.evaluate(
+                """() => [...document.querySelectorAll('.cu-item')]
+                  .filter((item) => item.textContent.includes('Conference Week'))
+                  .map((item) => !!item.querySelector('.avatar'))"""
+            )
+            if found != [False]:
+                raise DesignFailure(f"the shared school day is drawn {found} in Coming up")
         elif step == "shop-all":
             page.click(".shop-toggle")
             page.wait_for_timeout(300)

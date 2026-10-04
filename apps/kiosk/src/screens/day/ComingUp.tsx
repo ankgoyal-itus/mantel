@@ -1,4 +1,4 @@
-import type { Day } from '../../api/types'
+import type { Day, KidDay } from '../../api/types'
 import Avatar from '../../components/Avatar'
 import Icon from '../../components/icons/Icon'
 import { copy } from '../../copy'
@@ -24,6 +24,28 @@ function dayHead(date: string): string {
  * on (their face, then the thing), what the family has on, and dinner. It is
  * a glance, so it clamps rather than wraps: the list screen has the rest.
  */
+type Item = { key: string; kid: KidDay | null; title: string; start: string | null }
+
+/**
+ * One entry per event, however many of the family have it. The same title
+ * at the same time on two children's calendars — a school's conference
+ * week, sent to both — is one thing the house is doing, so it is drawn once
+ * and without a face, as the list draws a school day both children share.
+ */
+export function shared(items: readonly Item[]): Item[] {
+  const kept = new Map<string, Item>()
+  for (const item of items) {
+    const key = `${item.title.toLowerCase().replace(/\s+/g, ' ').trim()}|${item.start ?? 'all'}`
+    const first = kept.get(key)
+    if (!first) {
+      kept.set(key, { ...item })
+    } else if (first.kid?.id !== item.kid?.id) {
+      first.kid = null
+    }
+  }
+  return [...kept.values()]
+}
+
 export default function ComingUp({ days, compact = false }: { days: Day[]; compact?: boolean }) {
   return (
     // Compact: two days, no title row, 24px lines — what fits in 60 to 160px
@@ -36,7 +58,7 @@ export default function ComingUp({ days, compact = false }: { days: Day[]; compa
       )}
       <ul className="cu-rows">
         {days.map((day) => {
-          const items = [
+          const all = [
             ...day.kids.flatMap((kid) =>
               classifyAgenda(kid.agenda, 0).map(({ entry }) => ({
                 key: `${kid.id}-${entry.title}-${entry.start ?? 'all'}`,
@@ -52,6 +74,7 @@ export default function ComingUp({ days, compact = false }: { days: Day[]; compa
               start: entry.start,
             })),
           ].sort((a, b) => (a.start ?? '').localeCompare(b.start ?? ''))
+          const items = shared(all)
           const dinner = day.meals.dinner
           return (
             <li key={day.date} className="cu-row">
