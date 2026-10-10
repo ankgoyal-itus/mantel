@@ -34,7 +34,6 @@ from . import (
     approvals,
     backup,
     banks,
-    cash,
     claims,
     corrections,
     digest,
@@ -108,7 +107,6 @@ from .models import (
     PanchangTithi,
     ParentBanks,
     ParentSettings,
-    Payout,
     PendingCount,
     Photo,
     PickDecision,
@@ -1377,15 +1375,6 @@ def create_app(
                 roblox_minutes=banks.balance(connection, kid_id, "roblox"),
                 last_deposit=banks.last_deposit(connection, kid_id),
             )
-
-    @app.get(
-        "/api/parent/payouts",
-        response_model=list[Payout],
-        dependencies=[Depends(require_parent)],
-    )
-    def payout_history(kid_id: Annotated[str, Query()]) -> list[Payout]:
-        with books.connect() as connection:
-            return cash.history(connection, kid_id)
 
     def allowance_settings() -> Allowance:
         settings = store.settings.current

@@ -510,9 +510,14 @@ TODOS = [
      "day": None, "days": None, "due": None},
     {"ref": "allowance:4:2", "kind": "allowance", "kid_id": "kabir", "title": "Allowance",
      "day": 2, "days": 5, "due": TODAY.isoformat()},
-    # A cash reward said yes to: "Give Kabir $5", with Paid.
-    {"ref": "redemption:6", "kind": "cash", "kid_id": "kabir", "title": "$5 cash",
-     "day": None, "days": None, "due": None, "dollars": 5},
+    # Mira asked to cash out $20, and Kabir to use an hour of Roblox: "Pay
+    # Mira $20" with Paid, "Give Kabir 60 min of Roblox today" with Done, and
+    # a Decline on each.
+    {"ref": "bank:1", "kind": "cashout", "kid_id": "mira", "title": "Pay Mira $20",
+     "day": None, "days": None, "due": None, "cents": 2000, "minutes": None, "request_id": 1},
+    {"ref": "bank:2", "kind": "roblox", "kid_id": "kabir",
+     "title": "Give Kabir 60 min of Roblox today", "day": None, "days": None, "due": None,
+     "cents": None, "minutes": 60, "request_id": 2},
 ]
 
 ROUTES = {
@@ -912,6 +917,7 @@ PARENT_SETTINGS = {
     },
     "points": {"streak_bonus": 20, "streak_days": 7, "roblox_per_week": 2, "deductions": False,
                "parent_idle_minutes": 2},
+    "banks": {"cash_out_min_cents": 2000, "roblox_use_sizes": [30, 60, 120]},
     "kids": [
         {"id": "mira", "name": "Mira", "avatar": "fox", "color": "#1F8A8A"},
         {"id": "kabir", "name": "Kabir", "avatar": "panda", "color": "#D97706"},
@@ -970,9 +976,11 @@ DIGEST = {
     "kids": [
         {"kid_id": "mira", "name": "Mira", "earned": 35, "spent": 30,
          "approved": {TODAY.isoformat(): ["Homework", "30 minutes outside"]},
-         "redemptions": ["Ice cream"], "picks": ["Tacos"]},
+         "redemptions": ["Ice cream"], "bank": ["+$5 · $5 cash", "−$20 · cashed out"],
+         "picks": ["Tacos"]},
         {"kid_id": "kabir", "name": "Kabir", "earned": 20, "spent": 0,
-         "approved": {}, "redemptions": [], "picks": ["Pizza night"]},
+         "approved": {}, "redemptions": [], "bank": ["+1 h · Roblox +1 h"],
+         "picks": ["Pizza night"]},
     ],
 }
 
@@ -990,6 +998,18 @@ PICK_ALL = [
       "proteins": ["chicken"], "pickable": False, "why": "not a meat day",
       "cuisine": "indian", "yesterday": False}]
 
+#: Both children's banks as the Points tab reads them: Mira's $20 held for
+#: the cash-out waiting in Approvals, Kabir's hour of Roblox.
+KABIR_BANK = {
+    **kid_bank(0, 60, kid_id="kabir"),
+    "recent": [
+        {**bank_row(31, "roblox", 60, "deposit", "Roblox +1 h", 1), "kid_id": "kabir"},
+        {**bank_row(30, "roblox", -30, "use", "Roblox", 3), "kid_id": "kabir"},
+        {**bank_row(29, "roblox", 30, "adjust", "Rainy Sunday", 5), "kid_id": "kabir"},
+    ],
+}
+PARENT_BANKS = {"kids": [MIRA_BANK_ASKED, KABIR_BANK], "todos": TODOS[2:]}
+
 PARENT_ROUTES = {
     "/api/parent/session": {"open": True, "expires_in": 480},
     "/api/parent/approvals": PARENT_APPROVALS,
@@ -999,10 +1019,11 @@ PARENT_ROUTES = {
     "/api/parent/calendars": CALENDAR_ROWS,
     "/api/parent/school-events": SCHOOL_SERIES,
     "/api/parent/ledger": LEDGER,
-    "/api/parent/payouts": [
-        {"id": 2, "kid_id": "mira", "dollars": 5, "paid_at": f"{TODAY}T18:00:00-07:00",
-         "note": "redemption:5"},
-    ],
+    "/api/parent/banks": PARENT_BANKS,
+    "/api/parent/banks/mira/adjust": PARENT_BANKS,
+    # What is left once Paid, or Decline, has answered one of them.
+    "/api/parent/todos/done": [todo for todo in TODOS if todo["ref"] != "bank:1"],
+    "/api/parent/banks/requests/2/decline": [todo for todo in TODOS if todo["ref"] != "bank:2"],
     "/api/parent/about": {"version": "design", "lan_url": "http://<mac-ip>:8000/",
                           "launchd": "com.mantel.api running (pid 4242)", "upload_token": True},
     "/api/digest": DIGEST,

@@ -1204,14 +1204,6 @@ class PointsSummary(BaseModel):
     last_deposit: BankRow | None = None
 
 
-class Payout(BaseModel):
-    id: int
-    kid_id: str
-    dollars: int
-    paid_at: str
-    note: str | None = None
-
-
 class Feeling(BaseModel):
     """How a day was, in one tap, at bedtime."""
 
@@ -1351,15 +1343,13 @@ class Todo(BaseModel):
 
     #: "redemption:12", "allowance:12:2" or "bank:3"
     ref: str
-    kind: Literal["manual", "allowance", "cash", "cashout", "roblox"]
+    kind: Literal["manual", "allowance", "cashout", "roblox"]
     kid_id: str
     title: str
     #: For an allowance, which day of how many.
     day: int | None = None
     days: int | None = None
     due: Date | None = None
-    #: For cash, what to hand over: "Give Sam $5".
-    dollars: int | None = None
     #: The reward a redemption to-do is for: "dinner_out" offers "Plan it".
     reward_id: str | None = None
     #: For a bank request: the cash to hand over ("Pay Mira $20"), or the

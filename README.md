@@ -314,6 +314,7 @@ breakfast would be broken by homework due in the evening.
 
     points: {streak_bonus: 20, streak_days: 7, roblox_per_week: 2,
              deductions: false, parent_idle_minutes: 2}
+    banks: {cash_out_min_cents: 2000, roblox_use_sizes: [30, 60, 120]}
     allowance: {amount_note: "set in settings", reminder_hour: 18}
 
 ### Tuning rewards.yaml
@@ -328,16 +329,56 @@ breakfast would be broken by homework due in the evening.
 | `manual` | a card on the parent Approvals tab until somebody ticks it off |
 | `meal` | the child picks a meal, and it goes into `meals.yaml` |
 | `allowance` | one reminder a day for `days` days, at `allowance.reminder_hour` |
-| `policy` | screen time; unreachable while `enabled: false` |
+| `bank` | `dollars` into the child's piggy bank, or `minutes` into their Roblox bank, the moment a parent says yes |
+| `policy` | screen time granted by the policy plane; nothing uses it until v4 |
 
 `family: true` is paid out of the family jar rather than one child's balance.
 `enabled: false` shows the card greyed with "Coming soon" instead of hiding
-it — a reward a child cannot see is a reward they cannot save towards. The
-weekly Roblox cap applies whether or not those rewards are switched on, so
-turning them on is one flag and not a rule change.
+it — a reward a child cannot see is a reward they cannot save towards. A file
+that still says `fulfilment: cash` means `bank`.
+
+A child may ask for the same reward again while an earlier ask is still
+waiting, as long as the points cover it: each ask is its own redemption,
+holding its own points. The shop tile counts them ("Asked · 2").
 
 Approving a reward is not finishing it: the ice cream still has to be bought.
 `fulfilled` means somebody actually did the thing.
+
+### The bank
+
+Each child has two banks: a piggy bank in cents and a Roblox bank in minutes.
+They are one table, `bank`, kept by the same rules as the ledger — SQLite
+triggers refuse UPDATE and DELETE, and a balance is `SUM(delta)` per child and
+account, never stored. Every row says why it exists: a `deposit` (an approved
+reward), a `cashout`, a `use` of Roblox time, or a parent's `adjust`.
+
+    parent approves "$5 cash"          ->  points (held at the ask) stay spent,
+                                           one deposit row of 500 cents
+    child taps "Cash out $20"          ->  a request that holds $20,
+                                           "Pay Mira $20" in To do for you
+    parent hands it over, taps Paid    ->  one cashout row of -2000
+    parent taps Decline instead        ->  the hold ends; nothing written
+
+Money goes in when a parent says yes and comes out only when a parent has
+actually handed it over. A cash-out offers the whole balance rounded down to
+$5, and only once that reaches `banks.cash_out_min_cents` ($20 by default);
+under it the button says how much more to save.
+
+Roblox time works the same way. A child asks for one of
+`banks.roblox_use_sizes` (30 min, 1 h or 2 h), as long as it is in the bank
+and they have used fewer than `points.roblox_per_week` this ISO week. The ask
+holds the minutes and becomes "Give Kabir 60 min of Roblox today"; Done writes
+the use row. In v4 the request goes to the
+[policy-plane](https://github.com/ankgoyal-itus/policy-plane) instead, which
+grants the time on the device by rule. The row, the hold and the weekly cap
+stay as they are; only who hands the time over changes.
+
+A child sees both balances as chips under their points in kid mode, and as a
+caption under their points on the wall ("$15 saved · 2 h Roblox"); each chip
+opens that bank. A parent sees both on the Points tab, with the last twenty
+rows, and can Adjust either one for birthday money or a correction — a row of
+its own with a note, never an edit. Cash rewards approved before the bank and
+never paid moved into it, once, as `system` deposits.
 
 ### Setting a kid PIN
 
@@ -353,8 +394,9 @@ as `MANTEL_PARENT_PIN`.
 ### The weekly digest
 
 `GET /api/digest?week=2026-W39` returns each child's week — points earned and
-spent, chores approved by day, rewards, meal picks — counted from the ledger
-and the claims. It is rendered as a plain card on the parent Settings tab.
+spent, chores approved by day, rewards, money and Roblox time in and out of
+their banks, meal picks — counted from the ledger, the bank and the claims.
+It is rendered as a plain card on the parent Points tab.
 Nothing in it is generated: no LLM is in this or any other path.
 
 ## Outside sources
@@ -700,9 +742,11 @@ Chromium is not Safari 18, so the iPads remain the last word.
 
 Versions 1 to 3 are done and running every day on two iPads: the dashboard,
 the night screen and the photo frame; points, chores, rewards and the parent
-screen; meal picking, the month and the list. Next is the handshake with
+screen; meal picking, the month and the list; each child's piggy bank and
+Roblox bank. Next is the handshake with
 [policy-plane](https://github.com/ankgoyal-itus/policy-plane), so that the
-Roblox time a child buys here is granted there, on the device, by rule.
+Roblox time a child uses from their bank is granted there, on the device, by
+rule, instead of by a parent's Done.
 
 Mantel was built with Claude Code; the essay about building it is
 [here](https://ankitskgoyal.com/writing/a-concierge-engineer-for-the-house/).

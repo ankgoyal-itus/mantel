@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react'
 
 import { useLiveNonce } from '../../api/live'
 import { getJson } from '../../api/client'
-import { correctRow, getDigest, getLedger, getPayouts } from '../../api/parent'
-import type { Digest, Kid, LedgerRow, Payout, PointsSummary } from '../../api/types'
+import { correctRow, getBanks, getDigest, getLedger } from '../../api/parent'
+import type { Digest, Kid, LedgerRow, ParentBanks, PointsSummary } from '../../api/types'
 import Avatar from '../../components/Avatar'
 import Icon from '../../components/icons/Icon'
 import { copy } from '../../copy'
 import { kidVars } from '../../kidVars'
 import { usePressGuard } from '../../usePressGuard'
 import AwardSheet from './AwardSheet'
-import { Card, Pane, Row, Sheet, Toast } from './ui'
+import { BankAdjustSheet, BanksCard } from './BanksCard'
+import { Card, Pane, Sheet, Toast } from './ui'
 
 /** The rows a parent reads back through, and no more: this is a glance. */
 const LEDGER_ROWS = 30
@@ -40,6 +41,9 @@ export default function PointsSection({
 }) {
   const [summaries, setSummaries] = useState<Record<string, PointsSummary>>({})
   const [rows, setRows] = useState<LedgerRow[] | null>(null)
+  const [banks, setBanks] = useState<ParentBanks | null>(null)
+  // The child whose bank is being adjusted, in its sheet.
+  const [banking, setBanking] = useState<Kid | null>(null)
   const [digest, setDigest] = useState<Digest | null>(null)
   const [only, setOnly] = useState<string | null>(null)
   const [adjusting, setAdjusting] = useState(false)
@@ -79,6 +83,9 @@ export default function PointsSection({
     }
     getDigest()
       .then((found) => !cancelled && setDigest(found))
+      .catch(() => undefined)
+    getBanks()
+      .then((found) => !cancelled && setBanks(found))
       .catch(() => undefined)
     return () => {
       cancelled = true
@@ -131,11 +138,17 @@ export default function PointsSection({
                   <dd>{summary ? copy.parent.points.days(summary.streak_days) : '—'}</dd>
                 </div>
               </dl>
-              <CashRow kidId={kid.id} owed={Math.floor((summary?.cash_cents ?? 0) / 100)} nonce={nonce} />
             </Card>
           )
         })}
       </div>
+
+      {/* Each child's piggy bank and Roblox bank: a card apiece, under the
+          points, because it is the same child and a different currency. */}
+      {kids.map((kid) => {
+        const bank = banks?.kids.find((one) => one.kid_id === kid.id)
+        return bank ? <BanksCard key={kid.id} kid={kid} bank={bank} onAdjust={() => setBanking(kid)} /> : null
+      })}
 
       <Card title={copy.parent.points.ledger}>
         <div className="pp-chips" role="radiogroup" aria-label={copy.parent.points.filter}>
@@ -215,6 +228,9 @@ export default function PointsSection({
                 {kid.redemptions.length > 0 ? (
                   <p className="pp-line">{copy.parent.points.rewards(kid.redemptions)}</p>
                 ) : null}
+                {(kid.bank ?? []).length > 0 ? (
+                  <p className="pp-line">{copy.parent.points.bank(kid.bank ?? [])}</p>
+                ) : null}
                 {kid.picks.length > 0 ? (
                   <p className="pp-line">{copy.parent.points.picked(kid.picks)}</p>
                 ) : null}
@@ -276,6 +292,19 @@ export default function PointsSection({
         </Sheet>
       ) : null}
 
+      {banking ? (
+        <BankAdjustSheet
+          kid={banking}
+          onClose={() => setBanking(null)}
+          onSaved={(said) => {
+            setBad(false)
+            setNote(said)
+            setNonce((count) => count + 1)
+            onPointsChanged?.()
+          }}
+        />
+      ) : null}
+
       {adjusting ? (
         <AwardSheet
           kids={kids}
@@ -290,41 +319,5 @@ export default function PointsSection({
         />
       ) : null}
     </Pane>
-  )
-}
-
-/**
- * What a child's cash rewards come to: owed, which is paid from its card in
- * Approvals ("Give Sam $5", Paid), and what has been, one line a reward.
- */
-function CashRow({ kidId, owed, nonce }: { kidId: string; owed: number; nonce: number }) {
-  const [paid, setPaid] = useState<Payout[]>([])
-
-  useEffect(() => {
-    let cancelled = false
-    getPayouts(kidId)
-      .then((found) => !cancelled && setPaid(found))
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [kidId, nonce])
-
-  return (
-    <div className="pp-cash">
-      <Row
-        label={copy.parent.points.cashOwed}
-        note={
-          owed > 0
-            ? `${copy.parent.points.dollars(owed)} · ${copy.parent.points.payFromApprovals}`
-            : copy.parent.points.nothingOwed
-        }
-      />
-      {paid.slice(0, 3).map((row) => (
-        <p key={row.id} className="pp-line pp-muted">
-          {copy.parent.points.paidCash(row.dollars, dateSaid(row.paid_at))}
-        </p>
-      ))}
-    </div>
   )
 }

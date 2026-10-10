@@ -141,3 +141,16 @@ Format: one bullet per idea, newest at the bottom, with the date it was parked.
   often it was picked, by whom, how often a parent overrode it or went back
   to the plan, and which contested dinners went which way. Everything needed
   is already in meals.yaml history and the ledger; nothing leaves the Mac.
+- 2026-10-10 — v4: a Roblox use calls the policy plane instead of making a
+  parent to-do. The call site is banks.use_roblox; the request row, its hold
+  and the weekly cap are meant to stay exactly as they are.
+- 2026-10-10 — Cash-out offers one amount: the whole balance rounded down to
+  $5. A child choosing a smaller amount ($20 of $35) is the obvious next ask
+  and was not asked for.
+- 2026-10-10 — The "+$5 in your piggy bank" toast shows on the screen that
+  sees the deposit first; a yes approved while both iPads were asleep is only
+  said by the caption and the chips. A per-child "seen" mark in the API would
+  let it be said once, the next morning.
+- 2026-10-10 — The published pictures in screenshots/ predate the bank (the
+  rewards one still says the Roblox rows are off). `make screenshots` redraws
+  them.

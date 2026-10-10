@@ -333,7 +333,10 @@ STATES = [
     State("kid-week", Time(15, 30), steps=("week", "strip-labels")),
     # The parent screen: paper by day and the dark after hours, like the rest
     # of the kiosk, so every section is measured under both palettes.
-    parent("parent-approvals"),
+    parent("parent-approvals", "bank-todos"),
+    # Paid on "Pay Mira $20", tapped twice inside 400ms: one write (14i), and
+    # Decline on Kabir's Roblox.
+    parent("parent-bank-paid", "bank-paid", shots=False),
     parent("parent-meals", "section-meals", "meals-today"),
     parent("parent-meals-sheet", "section-meals", "open-cell"),
     parent("parent-meals-out", "section-meals", "open-out"),
@@ -344,8 +347,10 @@ STATES = [
     parent("parent-meals-out-set", "section-meals", "out-in-three", shots=False),
     parent("parent-events", "section-events"),
     parent("parent-photos", "section-photos", shots=False),
-    parent("parent-points", "section-points"),
-    parent("parent-settings", "section-settings", "diet-rows"),
+    parent("parent-points", "section-points", "bank-cards"),
+    # Adjust: birthday money into Mira's piggy bank, note and all.
+    parent("parent-bank-adjust", "section-points", "bank-adjust"),
+    parent("parent-settings", "section-settings", "diet-rows", "bank-settings"),
     parent("parent-about", "section-about"),
     # The done criteria, as steps that fail loudly: every section one tap
     # from the rail; idle minutes changed, written through PUT and "Saved";
@@ -846,6 +851,70 @@ def run_steps(page: Page, state: State, stub: Stub) -> None:
                 f"[data-section='{section}'][aria-current='page']", timeout=10000
             )
             page.wait_for_timeout(500)
+        elif step == "bank-todos":
+            cards = page.evaluate(
+                """() => [...document.querySelectorAll('.pp-todo')].map((card) => [
+                  card.querySelector('.pp-item-what').textContent,
+                  [...card.querySelectorAll('.pp-item-actions button')]
+                    .map((b) => b.textContent)])"""
+            )
+            wanted = [["Pay Mira $20", ["Paid", "Decline"]],
+                      ["Give Kabir 60 min of Roblox today", ["Done", "Decline"]]]
+            if [card for card in cards if card[0] in {w[0] for w in wanted}] != wanted:
+                raise DesignFailure(f"bank to-dos in Approvals: {cards}")
+        elif step == "bank-paid":
+            # Two taps in one tick, before React has re-rendered the button
+            # as disabled: only the press guard stands between them.
+            page.wait_for_selector(".pp-todo", timeout=5000)
+            page.evaluate(
+                """() => {
+                  const card = [...document.querySelectorAll('.pp-todo')]
+                    .find((one) => one.textContent.includes('Pay Mira $20'));
+                  const paid = card.querySelector('.pp-button-accent');
+                  paid.click();
+                  paid.click();
+                }"""
+            )
+            page.wait_for_timeout(500)
+            done = [w for w in stub.writes if w[1] == "/api/parent/todos/done"]
+            if done != [("POST", "/api/parent/todos/done", {"ref": "bank:1"})]:
+                raise DesignFailure(f"Paid twice in 400ms wrote {done}")
+            page.locator(".pp-todo", has_text="Give Kabir").locator("text=Decline").click()
+            page.wait_for_timeout(400)
+            declined = [w for w in stub.writes if "/decline" in w[1] and "banks" in w[1]]
+            if [w[1] for w in declined] != ["/api/parent/banks/requests/2/decline"]:
+                raise DesignFailure(f"Decline on the Roblox use wrote {declined}")
+        elif step == "bank-cards":
+            cards = page.locator(".pp-bank-card").all_inner_texts()
+            if len(cards) != 2 or "Mira’s banks" not in cards[0] or "$20 waiting" not in cards[0] \
+                    or "Birthday from Grandma" not in cards[0] or "1 h" not in cards[1]:
+                raise DesignFailure(f"the Banks cards: {cards}")
+            digest = page.locator(".pp-digest").first.inner_text()
+            if "Bank: +$5 · $5 cash · −$20 · cashed out" not in digest:
+                raise DesignFailure(f"bank movements in the digest: {digest!r}")
+        elif step == "bank-adjust":
+            page.locator(".pp-bank-card .pp-bank-head .pp-button").first.click()
+            page.wait_for_selector(".pp-sheet", timeout=5000)
+            page.locator(".pp-sheet .pp-chip", has_text="$5").click()
+            page.fill(".pp-sheet .pp-input", "Birthday from Grandma")
+            page.locator(".pp-sheet .pp-button-accent").click()
+            page.wait_for_timeout(400)
+            sent = [w for w in stub.writes if w[1] == "/api/parent/banks/mira/adjust"]
+            want = {"account": "cash", "delta": 500, "note": "Birthday from Grandma"}
+            if sent != [("POST", "/api/parent/banks/mira/adjust", want)]:
+                raise DesignFailure(f"Adjust sent {sent}")
+        elif step == "bank-settings":
+            text = page.locator(".pp-pane-body").inner_text()
+            for words in ("Cash out minimum", "$20", "Roblox sizes", "Roblox uses per week"):
+                if words not in text:
+                    raise DesignFailure(f"Settings → Points does not say {words!r}")
+            on = page.evaluate(
+                """() => [...document.querySelectorAll('[aria-label="Roblox sizes"] .pp-chip')]
+                  .filter((chip) => chip.getAttribute('aria-checked') === 'true')
+                  .map((chip) => chip.textContent)"""
+            )
+            if on != ["30 min", "60 min", "120 min"]:
+                raise DesignFailure(f"Roblox sizes on: {on}")
         elif step == "diet-rows":
             # One row per festival, never one per alias.
             names = page.eval_on_selector_all(

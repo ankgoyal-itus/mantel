@@ -6,6 +6,7 @@ import {
   approveRedemption,
   decidePick,
   setMeal,
+  declineBankRequest,
   declineClaim,
   declineRedemption,
   finishTodo,
@@ -20,6 +21,7 @@ import Illustration from '../../components/illustrations/Illustration'
 import { copy } from '../../copy'
 import { usePressGuard } from '../../usePressGuard'
 import { kidVars } from '../../kidVars'
+import { dollars } from '../kid/bank'
 import AwardSheet from './AwardSheet'
 import { Card, Pane, Toast } from './ui'
 import { groupApprovals, whenSaid } from './approvals'
@@ -219,7 +221,35 @@ export default function ApprovalsSection({
   const finish = (todo: Todo) => {
     setBusy(todo.ref)
     finishTodo(todo.ref)
-      .then(setTodos)
+      .then((left) => {
+        setTodos(left)
+        // Money or time out of a bank: say what was handed over, and let the
+        // wall's caption catch up.
+        const who = nameOf(todo.kid_id)
+        if (todo.kind === 'cashout' && todo.cents) {
+          setNote({ text: copy.parent.approvals.paidSaid(who, dollars(todo.cents)), bad: false })
+          onPointsChanged?.()
+        } else if (todo.kind === 'roblox' && todo.minutes) {
+          setNote({ text: copy.parent.approvals.gaveSaid(who, todo.minutes), bad: false })
+          onPointsChanged?.()
+        }
+      })
+      .catch(() => setNote({ text: copy.parent.approvals.failed, bad: true }))
+      .finally(() => setBusy(''))
+  }
+
+  /** Not this time, on a cash-out or a Roblox use: the hold ends and nothing
+      leaves the bank. */
+  const declineBank = (todo: Todo) => {
+    if (todo.request_id == null) {
+      return
+    }
+    setBusy(todo.ref)
+    declineBankRequest(todo.request_id)
+      .then((left) => {
+        setTodos(left)
+        setNote({ text: copy.parent.approvals.bankDeclined(nameOf(todo.kid_id)), bad: false })
+      })
       .catch(() => setNote({ text: copy.parent.approvals.failed, bad: true }))
       .finally(() => setBusy(''))
   }
@@ -365,9 +395,11 @@ export default function ApprovalsSection({
                   <span className="pp-item-what clamp-1">
                     {todo.kind === 'allowance' && todo.day && todo.days
                       ? copy.parent.approvals.allowance(todo.day, todo.days, nameOf(todo.kid_id))
-                      : todo.kind === 'cash' && todo.dollars
-                        ? copy.parent.approvals.giveCash(nameOf(todo.kid_id), todo.dollars)
-                        : copy.parent.approvals.todo(todo.title, nameOf(todo.kid_id))}
+                      : todo.kind === 'cashout' && todo.cents
+                        ? copy.parent.approvals.payCash(nameOf(todo.kid_id), dollars(todo.cents))
+                        : todo.kind === 'roblox' && todo.minutes
+                          ? copy.parent.approvals.giveRoblox(nameOf(todo.kid_id), todo.minutes)
+                          : copy.parent.approvals.todo(todo.title, nameOf(todo.kid_id))}
                   </span>
                   {todo.due ? (
                     <span className="pp-item-when">{copy.parent.approvals.due(todo.due)}</span>
@@ -385,12 +417,25 @@ export default function ApprovalsSection({
                     className="pp-button pp-button-accent"
                     disabled={busy === todo.ref}
                     data-pressed={pressed(todo.ref)}
-                    onClick={() => guard.press(todo.ref, () => finish(todo))}
+                    onClick={() => guard.press(todo.ref, () => finish(todo), todo.ref)}
                   >
-                    {todo.kind === 'allowance' || todo.kind === 'cash'
+                    {todo.kind === 'allowance' || todo.kind === 'cashout'
                       ? copy.parent.approvals.paid
                       : copy.parent.done}
                   </button>
+                  {/* A child asked to take it out; a parent may say not now.
+                      One group with Paid or Done: a bounced tap is one answer. */}
+                  {todo.kind === 'cashout' || todo.kind === 'roblox' ? (
+                    <button
+                      type="button"
+                      className="pp-button"
+                      disabled={busy === todo.ref}
+                      data-pressed={pressed(`${todo.ref}:no`)}
+                      onClick={() => guard.press(`${todo.ref}:no`, () => declineBank(todo), todo.ref)}
+                    >
+                      {copy.parent.approvals.decline}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </Card>

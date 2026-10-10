@@ -121,11 +121,10 @@ CREATE TABLE IF NOT EXISTS kid_pins (
   pin_hash TEXT NOT NULL
 );
 
--- Money handed over for cash rewards (v2). What a child is owed is never
--- stored: it is the dollars their approved cash rewards were worth, less
--- these rows, so like a balance it cannot drift from what produced it. And
--- like the ledger it is append-only: a payment recorded in error is
--- corrected by a parent recording what actually happened, not by erasing.
+-- Money handed over for cash rewards (v2), before each child had a bank.
+-- Nothing writes here since v3 — a cash reward is a bank deposit and money
+-- out is a `cashout` row in `bank` — but the rows stay, append-only, as the
+-- record of what was handed over.
 CREATE TABLE IF NOT EXISTS payouts (
   id       INTEGER PRIMARY KEY AUTOINCREMENT,
   kid_id   TEXT    NOT NULL,

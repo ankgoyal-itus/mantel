@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 
 import { getKidPins, getSettings, putKidPin, putSettings } from '../../api/parent'
-import type { DateRange, KidEdit, ParentSettings, Weekday } from '../../api/types'
+import type { BankSettings, DateRange, KidEdit, ParentSettings, Weekday } from '../../api/types'
 import Avatar from '../../components/Avatar'
 import { AVATARS } from '../../components/avatars'
 import { copy } from '../../copy'
@@ -10,6 +10,13 @@ import { Card, Pane, Row, Sheet, Stepper, TOAST_MS, TimeField, Toast, Toggle } f
 const WEEK: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
 type Said = { text: string; bad: boolean }
+
+
+/** settings.banks when the file has none yet: what the API defaults to. */
+const DEFAULT_BANKS: BankSettings = { cash_out_min_cents: 2000, roblox_use_sizes: [30, 60, 120] }
+
+/** The Roblox sizes a parent can offer, three at a time. */
+const ROBLOX_SIZES = [15, 30, 45, 60, 90, 120]
 
 /**
  * Everything the house may change from the iPad, grouped as cards.
@@ -92,6 +99,7 @@ export default function SettingsSection() {
 
   const diet = draft.diet
   const points = draft.points
+  const banks = draft.banks ?? DEFAULT_BANKS
 
   const setKid = (id: string, patch: Partial<KidEdit>) =>
     commit({ kids: draft.kids.map((kid) => (kid.id === id ? { ...kid, ...patch } : kid)) })
@@ -298,7 +306,51 @@ export default function SettingsSection() {
             onCommit={(streak_days) => commit({ points: { ...points, streak_days } })}
           />
         </Row>
-        <Row label={copy.parent.settings.roblox}>
+        <Row label={copy.parent.settings.cashOutMin} note={copy.parent.settings.cashOutMinNote}>
+          <Stepper
+            label={copy.parent.settings.cashOutMin}
+            value={banks.cash_out_min_cents / 100}
+            min={5}
+            max={200}
+            step={5}
+            format={(value) => `$${value}`}
+            onCommit={(dollars) => commit({ banks: { ...banks, cash_out_min_cents: dollars * 100 } })}
+          />
+        </Row>
+        {/* Six chips do not fit beside the label on a phone: they get their
+            own line under it, and wrap. */}
+        <Row label={copy.parent.settings.robloxSizes} note={copy.parent.settings.robloxSizesNote} />
+        <div className="pp-chips" role="group" aria-label={copy.parent.settings.robloxSizes}>
+          {ROBLOX_SIZES.map((minutes) => {
+            const on = banks.roblox_use_sizes.includes(minutes)
+            // One to three: the last one stays, and a fourth waits for
+            // one of the three to be let go.
+            const locked = on ? banks.roblox_use_sizes.length <= 1 : banks.roblox_use_sizes.length >= 3
+            return (
+              <button
+                key={minutes}
+                type="button"
+                role="checkbox"
+                aria-checked={on}
+                className={on ? 'pp-chip pp-chip-on' : 'pp-chip'}
+                disabled={locked}
+                onClick={() =>
+                  commit({
+                    banks: {
+                      ...banks,
+                      roblox_use_sizes: on
+                        ? banks.roblox_use_sizes.filter((size) => size !== minutes)
+                        : [...banks.roblox_use_sizes, minutes].sort((a, b) => a - b),
+                    },
+                  })
+                }
+              >
+                {copy.parent.settings.robloxSize(minutes)}
+              </button>
+            )
+          })}
+        </div>
+        <Row label={copy.parent.settings.roblox} note={copy.parent.settings.robloxNote}>
           <Stepper
             label={copy.parent.settings.roblox}
             value={points.roblox_per_week}

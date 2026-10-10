@@ -1657,3 +1657,22 @@
 .pp-empty-glyph {
   flex: none;
 }
+
+/* -- banks, on the Points tab ----------------------------------------------
+   A child's piggy bank and Roblox bank: the two balances as stats, what is
+   held for a request still in To do for you, and the last twenty rows. */
+
+.pp-bank-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+}
+
+.pp-stats .pp-bank-held {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 400;
+}

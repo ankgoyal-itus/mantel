@@ -156,9 +156,6 @@ export type PointsSummary = {
   last_deposit?: BankRow | null
 }
 
-/** Money handed over for cash rewards. */
-export type Payout = { id: number; kid_id: string; dollars: number; paid_at: string; note: string | null }
-
 export type LedgerRow = {
   id: number
   kid_id: string
@@ -204,14 +201,12 @@ export type Redemption = {
 
 export type Todo = {
   ref: string
-  kind: 'manual' | 'allowance' | 'cash' | 'cashout' | 'roblox'
+  kind: 'manual' | 'allowance' | 'cashout' | 'roblox'
   kid_id: string
   title: string
   day: number | null
   days: number | null
   due: string | null
-  /** For cash: what to hand over. */
-  dollars?: number | null
   /** The reward a redemption to-do is for: "dinner_out" offers Plan it. */
   reward_id?: string | null
   /** A bank request: the cash to pay, or the Roblox time to give. */

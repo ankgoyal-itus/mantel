@@ -10,7 +10,8 @@ import type {
   DecisionResult,
   DietDay,
   MealSlotName,
-  Payout,
+  ParentBanks,
+  BankAccount,
   PickOption,
   PickRow,
   Digest,
@@ -325,8 +326,23 @@ export function reloadBoth(): Promise<Health> {
   return send<Health>('/api/parent/reload', json('POST'))
 }
 
-/** Money handed over for cash rewards, one row per reward paid. Paying is
-    Paid on the reward's to-do (finishTodo), not a sum typed here. */
-export function getPayouts(kidId: string): Promise<Payout[]> {
-  return send<Payout[]>(`/api/parent/payouts?kid_id=${kidId}`, json('GET'))
+/** Both children's banks, and the cash-outs and Roblox uses waiting. */
+export function getBanks(): Promise<ParentBanks> {
+  return send<ParentBanks>('/api/parent/banks', json('GET'))
+}
+
+/** Birthday money, or a correction: a row of its own, never an edit. Cents
+    for cash, minutes for Roblox; negative takes out. */
+export function adjustBank(
+  kidId: string,
+  account: BankAccount,
+  delta: number,
+  note: string,
+): Promise<ParentBanks> {
+  return send<ParentBanks>(`/api/parent/banks/${kidId}/adjust`, json('POST', { account, delta, note }))
+}
+
+/** Not this time: the hold on a cash-out or Roblox use ends. */
+export function declineBankRequest(requestId: number): Promise<Todo[]> {
+  return send<Todo[]>(`/api/parent/banks/requests/${requestId}/decline`, json('POST'))
 }
