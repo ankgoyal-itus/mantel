@@ -20,6 +20,28 @@
       "title": "Allowance",
       "type": "object"
     },
+    "Banks": {
+      "additionalProperties": false,
+      "description": "Each child's piggy bank and Roblox bank (banks.py).",
+      "properties": {
+        "cash_out_min_cents": {
+          "default": 2000,
+          "maximum": 100000,
+          "minimum": 100,
+          "title": "Cash Out Min Cents",
+          "type": "integer"
+        },
+        "roblox_use_sizes": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Roblox Use Sizes",
+          "type": "array"
+        }
+      },
+      "title": "Banks",
+      "type": "object"
+    },
     "CalendarFeed": {
       "additionalProperties": false,
       "description": "One ICS feed.\n\nA private calendar names an environment variable, because its URL is a\npassword. A public one carries the URL itself: a holiday calendar or a\nschool district's feed is nobody's secret, and keeping it in settings.yaml\nmeans the feed list is reviewable in the repo.",
@@ -486,6 +508,9 @@
       "properties": {
         "allowance": {
           "$ref": "#/$defs/Allowance"
+        },
+        "banks": {
+          "$ref": "#/$defs/Banks"
         },
         "calendars": {
           "items": {

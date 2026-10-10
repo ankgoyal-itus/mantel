@@ -276,14 +276,39 @@ class Points(ContentModel):
     #: Paid once for a full streak_days run of every task the day required.
     streak_bonus: int = Field(default=20, ge=0)
     streak_days: int = Field(default=7, ge=1, le=31)
-    #: How many Roblox rewards may be redeemed in one week, once they are
-    #: enabled at all. Enforced whether they are enabled or not, so turning
-    #: them on is one flag and not a rule change.
+    #: How many times a week a child may use Roblox time from their bank
+    #: (banks.py). Buying the time is not capped; spending it is.
     roblox_per_week: int = Field(default=2, ge=0)
     #: Whether a parent may take points away. Off: the ledger only goes up
     #: except when something is bought, which is the whole design.
     deductions: bool = False
     parent_idle_minutes: int = Field(default=2, ge=1, le=60)
+
+
+class Banks(ContentModel):
+    """Each child's piggy bank and Roblox bank (banks.py)."""
+
+    #: The least a child may ask to take out, in cents: $20 by default, so a
+    #: cash-out is an occasion and not a coin at a time.
+    cash_out_min_cents: int = Field(default=2000, ge=100, le=100_000)
+    #: The amounts of Roblox time a child may ask to use at once, in minutes.
+    roblox_use_sizes: list[int] = Field(default_factory=lambda: [30, 60, 120])
+
+    @field_validator("cash_out_min_cents")
+    @classmethod
+    def _whole_dollars(cls, value: int) -> int:
+        if value % 100:
+            raise ValueError("cash_out_min_cents is a whole number of dollars, in cents")
+        return value
+
+    @field_validator("roblox_use_sizes")
+    @classmethod
+    def _sizes(cls, value: list[int]) -> list[int]:
+        if not 1 <= len(value) <= 3:
+            raise ValueError("roblox_use_sizes has one to three sizes")
+        if any(not 5 <= size <= 600 for size in value):
+            raise ValueError("each Roblox size is between 5 and 600 minutes")
+        return sorted(set(value))
 
 
 class Allowance(ContentModel):
@@ -329,6 +354,7 @@ class Settings(ContentModel):
     diet: Diet = Field(default_factory=Diet)
     panchang: Panchang = Field(default_factory=Panchang)
     points: Points = Field(default_factory=Points)
+    banks: Banks = Field(default_factory=Banks)
     allowance: Allowance = Field(default_factory=Allowance)
     feelings: Feelings = Field(default_factory=Feelings)
     frame: FrameChip = Field(default_factory=FrameChip)
@@ -636,6 +662,7 @@ class ParentSettings(BaseModel):
     frame_chip_size: Literal["regular", "large"] | None = None
     diet: DietEdit | None = None
     points: Points | None = None
+    banks: Banks | None = None
     kids: list[KidEdit] | None = None
 
 
@@ -1020,8 +1047,9 @@ class Reward(ContentModel):
     cost: int = Field(ge=1)
     #: What approving it actually does. `manual` is a parent doing a thing in
     #: the world and ticking it off; the rest are handled by the fulfilment
-    #: engine.
-    fulfilment: Literal["manual", "allowance", "meal", "policy", "cash"]
+    #: engine. `bank` puts `dollars` in the piggy bank or `minutes` in the
+    #: Roblox bank (banks.py); `cash` is its old name and means the same.
+    fulfilment: Literal["manual", "allowance", "meal", "policy", "bank"]
     glyph: str = "star"
     #: Paid out of the family jar rather than one child's balance.
     family: bool = False
@@ -1034,6 +1062,13 @@ class Reward(ContentModel):
     minutes: int | None = Field(default=None, ge=1, le=600)
     #: For cash: what one of these adds to the child's savings, in dollars.
     dollars: int | None = Field(default=None, ge=1, le=1000)
+
+    @field_validator("fulfilment", mode="before")
+    @classmethod
+    def _cash_is_bank(cls, value: object) -> object:
+        # Before the bank, a cash reward added to what a parent owed. It goes
+        # in the piggy bank now, and a file still saying `cash` keeps working.
+        return "bank" if value == "cash" else value
 
     @field_validator("glyph")
     @classmethod
@@ -1048,9 +1083,27 @@ class Reward(ContentModel):
             raise ValueError(f"reward {self.id!r} is an allowance and needs days:")
         if self.fulfilment == "policy" and self.minutes is None:
             raise ValueError(f"reward {self.id!r} is a policy and needs minutes:")
-        if self.fulfilment == "cash" and self.dollars is None:
-            raise ValueError(f"reward {self.id!r} is cash and needs dollars:")
+        if self.fulfilment == "bank" and (self.dollars is None) == (self.minutes is None):
+            raise ValueError(
+                f"reward {self.id!r} goes to the bank and needs dollars: or minutes:, not both"
+            )
         return self
+
+    @property
+    def account(self) -> Literal["cash", "roblox"] | None:
+        """Which bank a `bank` reward pays into, or None for any other."""
+        if self.fulfilment != "bank":
+            return None
+        return "cash" if self.dollars is not None else "roblox"
+
+    @property
+    def deposit(self) -> int:
+        """What one of these puts in the bank: cents, or minutes."""
+        if self.account == "cash":
+            return (self.dollars or 0) * 100
+        if self.account == "roblox":
+            return self.minutes or 0
+        return 0
 
 
 class Rewards(ContentModel):
@@ -1125,9 +1178,11 @@ class PointsSummary(BaseModel):
     #: them. A balance on its own is a number; a balance against something
     #: they want is a reason to do the washing up.
     saving_for: list[SavingFor] = Field(default_factory=list)
-    #: Dollars their cash rewards are worth that a parent has not handed over
-    #: yet. It only goes up by a cash reward approved, and only down by a
-    #: payout recorded.
+    #: What is in their piggy bank, in cents, and their Roblox bank, in
+    #: minutes: balances, pending requests not taken off.
+    cash_cents: int = 0
+    roblox_minutes: int = 0
+    #: The piggy bank in whole dollars, for the card that still reads it.
     dollars_owed: int = 0
 
 
@@ -1276,9 +1331,9 @@ class Todo(BaseModel):
     bought and the allowance has not been handed over. These are what is left.
     """
 
-    #: "redemption:12" or "allowance:12:2"
+    #: "redemption:12", "allowance:12:2" or "bank:3"
     ref: str
-    kind: Literal["manual", "allowance", "cash"]
+    kind: Literal["manual", "allowance", "cash", "cashout", "roblox"]
     kid_id: str
     title: str
     #: For an allowance, which day of how many.
@@ -1289,6 +1344,12 @@ class Todo(BaseModel):
     dollars: int | None = None
     #: The reward a redemption to-do is for: "dinner_out" offers "Plan it".
     reward_id: str | None = None
+    #: For a bank request: the cash to hand over ("Pay Mira $20"), or the
+    #: Roblox time to give ("Give Kabir 60 min of Roblox today").
+    cents: int | None = None
+    minutes: int | None = None
+    #: The bank request behind a cashout or roblox to-do, for its Decline.
+    request_id: int | None = None
 
 
 class TodoDone(BaseModel):
@@ -1433,6 +1494,8 @@ class DigestKid(BaseModel):
     #: ISO date → the chores approved that day.
     approved: dict[str, list[str]] = Field(default_factory=dict)
     redemptions: list[str] = Field(default_factory=list)
+    #: Money and Roblox time in and out of their banks: "+$5 · $5 cash".
+    bank: list[str] = Field(default_factory=list)
     picks: list[str] = Field(default_factory=list)
     #: ISO date → how that day felt, on the nights they said. Only here: the
     #: check-in is for the people in the house, not for the wall.
@@ -1446,3 +1509,93 @@ class Digest(BaseModel):
     kids: list[DigestKid] = Field(default_factory=list)
     #: The meals eaten out that week: "Sat dinner: Out · Taqueria Luna".
     out: list[str] = Field(default_factory=list)
+
+
+BankAccount = Literal["cash", "roblox"]
+
+
+class BankRow(BaseModel):
+    """One line of a child's bank: cents for cash, minutes for Roblox."""
+
+    id: int
+    kid_id: str
+    account: BankAccount
+    delta: int
+    reason_kind: Literal["deposit", "cashout", "use", "adjust"]
+    reason_ref: str | None = None
+    note: str | None = None
+    actor: Literal["kid", "parent", "system"]
+    created_at: str
+
+
+class BankRequest(BaseModel):
+    """A cash-out or a Roblox use, waiting on a parent. It holds its amount."""
+
+    id: int
+    kid_id: str
+    account: BankAccount
+    #: Cents for cash, minutes for Roblox; always positive.
+    amount: int
+    status: Literal["requested", "done", "declined"]
+    requested_at: str
+    decided_at: str | None = None
+    bank_id: int | None = None
+
+
+class CashAccount(BaseModel):
+    cents: int
+    #: The balance less what pending cash-outs hold.
+    available_cents: int
+    pending: list[BankRequest] = Field(default_factory=list)
+
+
+class RobloxAccount(BaseModel):
+    minutes: int
+    available_minutes: int
+    pending: list[BankRequest] = Field(default_factory=list)
+    #: Uses asked for or given this ISO week, against settings.points.roblox_per_week.
+    uses_this_week: int = 0
+    per_week: int = 0
+    #: settings.banks.roblox_use_sizes, so the sheet offers what the API takes.
+    sizes: list[int] = Field(default_factory=list)
+
+
+class KidBank(BaseModel):
+    """GET /api/banks/{kid}: both accounts and the last twenty rows."""
+
+    kid_id: str
+    cash: CashAccount
+    roblox: RobloxAccount
+    #: settings.banks.cash_out_min_cents, for the sheet's button.
+    cash_out_min_cents: int
+    recent: list[BankRow] = Field(default_factory=list)
+
+
+class ParentBanks(BaseModel):
+    """GET /api/parent/banks: every child's bank, and what is waiting on a parent."""
+
+    kids: list[KidBank] = Field(default_factory=list)
+    todos: list[Todo] = Field(default_factory=list)
+
+
+class CashoutRequest(BaseModel):
+    cents: int = Field(ge=1, le=1_000_000)
+
+
+class RobloxUseRequest(BaseModel):
+    minutes: int = Field(ge=1, le=600)
+
+
+class BankAdjust(BaseModel):
+    """A parent putting money or time in, or taking it out to correct something."""
+
+    account: BankAccount
+    delta: int = Field(ge=-1_000_000, le=1_000_000)
+    note: str = Field(max_length=80)
+
+    @field_validator("delta")
+    @classmethod
+    def _not_nothing(cls, value: int) -> int:
+        if value == 0:
+            raise ValueError("an adjustment moves something")
+        return value

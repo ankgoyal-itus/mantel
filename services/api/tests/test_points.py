@@ -42,6 +42,8 @@ def test_points_are_balance_week_and_streak(client: TestClient, database: Databa
         "balance": 35,
         "this_week": 35,
         "streak_days": 0,
+        "cash_cents": 0,
+        "roblox_minutes": 0,
         "dollars_owed": 0,
         # Nothing marked yet: the bars only exist once a child has chosen.
         "saving_for": [],
@@ -94,5 +96,5 @@ def test_rewards_include_the_disabled_ones(client: TestClient) -> None:
 
 def test_health_reports_the_ledger(client: TestClient) -> None:
     body = client.get("/api/health").json()
-    assert body["ledger"].startswith("ok (schema 3")
+    assert body["ledger"].startswith("ok (schema 4")
     assert body["content"]["rewards"] == "ok"

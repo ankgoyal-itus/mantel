@@ -33,6 +33,7 @@ from starlette.concurrency import run_in_threadpool
 from . import (
     approvals,
     backup,
+    banks,
     cash,
     claims,
     corrections,
@@ -69,8 +70,11 @@ from .models import (
     Allowance,
     ApprovalItem,
     AwardRequest,
+    BankAdjust,
+    Banks,
     CalendarEvent,
     CalendarRow,
+    CashoutRequest,
     Claim,
     ClaimRequest,
     Config,
@@ -86,6 +90,7 @@ from .models import (
     Feeling,
     Health,
     JarRequest,
+    KidBank,
     KidPin,
     LedgerRow,
     MealDay,
@@ -101,6 +106,7 @@ from .models import (
     PanchangSamvat,
     PanchangSchool,
     PanchangTithi,
+    ParentBanks,
     ParentSettings,
     Payout,
     PendingCount,
@@ -118,6 +124,7 @@ from .models import (
     RedemptionRequest,
     Reward,
     Rewards,
+    RobloxUseRequest,
     Schedule,
     SeriesEdit,
     Settings,
@@ -347,6 +354,8 @@ def create_app(
                 shop_now = store.rewards.current
                 if shop_now is not None:
                     redemptions.retire_meal_rewards(connection, shop_now, now=now)
+                # Cash rewards approved before the bank and never paid.
+                banks.move_owed_cash(connection, now=now)
             store.load_all()
         except Exception:  # noqa: BLE001 - never block start-up on this
             logger.exception("could not prepare the picks table")
@@ -1364,7 +1373,9 @@ def create_app(
                     if kid_id in ("", ledger.FAMILY)
                     else saving.summary(connection, kid_id, shop())
                 ),
-                dollars_owed=cash.owed(connection, kid_id),
+                cash_cents=banks.balance(connection, kid_id, "cash"),
+                roblox_minutes=banks.balance(connection, kid_id, "roblox"),
+                dollars_owed=banks.balance(connection, kid_id, "cash") // 100,
             )
 
     @app.get(
@@ -1459,7 +1470,18 @@ def create_app(
     def parent_todos() -> list[Todo]:
         """Approved is not done: the ice cream still has to be bought."""
         with books.connect() as connection:
-            return redemptions.todos(connection, shop(), today_here())
+            return all_todos(connection)
+
+    def kid_names() -> dict[str, str]:
+        family, *_ = snapshot()
+        return {kid.id: kid.name for kid in family.kids}
+
+    def all_todos(connection: Any) -> list[Todo]:
+        """Rewards to deliver, allowance to pay, and bank requests to hand over."""
+        return [
+            *redemptions.todos(connection, shop(), today_here()),
+            *banks.todos(connection, kid_names()),
+        ]
 
     @app.post(
         "/api/parent/todos/done",
@@ -1473,7 +1495,114 @@ def create_app(
         except claims.ClaimError as exc:
             raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
         with books.connect() as connection:
-            return redemptions.todos(connection, shop(), today_here())
+            return all_todos(connection)
+
+    def bank_settings() -> Banks:
+        settings = store.settings.current
+        return settings.banks if settings is not None else Banks()
+
+    def known_kid(kid_id: str) -> None:
+        if kid_id not in kid_ids():
+            raise HTTPException(status_code=404, detail=f"unknown kid {kid_id!r}")
+
+    def bank_of(kid_id: str) -> KidBank:
+        with books.connect() as connection:
+            return banks.view(connection, kid_id, bank_settings(), points_settings(), today_here())
+
+    @app.get("/api/banks/{kid_id}", response_model=KidBank)
+    def kid_bank(kid_id: str) -> KidBank:
+        """A child's piggy bank and Roblox bank, and what is waiting."""
+        known_kid(kid_id)
+        return bank_of(kid_id)
+
+    @app.post("/api/banks/{kid_id}/cashout", response_model=KidBank, status_code=201)
+    def ask_to_cash_out(kid_id: str, body: CashoutRequest) -> KidBank:
+        """Ask for money out. It is held until a parent taps Paid."""
+        known_kid(kid_id)
+        try:
+            with books.write() as connection:
+                banks.cash_out(
+                    connection, bank_settings(), kid_id=kid_id, cents=body.cents, now=now_here()
+                )
+        except claims.ClaimError as exc:
+            raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+        return bank_of(kid_id)
+
+    @app.post("/api/banks/{kid_id}/roblox/use", response_model=KidBank, status_code=201)
+    def ask_to_use_roblox(kid_id: str, body: RobloxUseRequest) -> KidBank:
+        """Ask for Roblox time. Held until a parent taps Done (v4: the policy
+        plane grants it instead)."""
+        known_kid(kid_id)
+        try:
+            with books.write() as connection:
+                banks.use_roblox(
+                    connection,
+                    bank_settings(),
+                    points_settings(),
+                    kid_id=kid_id,
+                    minutes=body.minutes,
+                    now=now_here(),
+                )
+        except claims.ClaimError as exc:
+            raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+        return bank_of(kid_id)
+
+    def parent_banks_view() -> ParentBanks:
+        with books.connect() as connection:
+            return ParentBanks(
+                kids=[
+                    banks.view(
+                        connection, kid_id, bank_settings(), points_settings(), today_here()
+                    )
+                    for kid_id in kid_ids()
+                ],
+                todos=banks.todos(connection, kid_names()),
+            )
+
+    @app.get(
+        "/api/parent/banks",
+        response_model=ParentBanks,
+        dependencies=[Depends(require_parent)],
+    )
+    def parent_banks() -> ParentBanks:
+        return parent_banks_view()
+
+    @app.post(
+        "/api/parent/banks/{kid_id}/adjust",
+        response_model=ParentBanks,
+        dependencies=[Depends(require_parent)],
+    )
+    def adjust_bank(kid_id: str, body: BankAdjust) -> ParentBanks:
+        """Birthday money, or a correction: a row of its own, never an edit."""
+        known_kid(kid_id)
+        try:
+            with books.write() as connection:
+                banks.adjust(
+                    connection,
+                    kid_id=kid_id,
+                    account=body.account,
+                    delta=body.delta,
+                    note=body.note,
+                    now=now_here(),
+                )
+        except claims.ClaimError as exc:
+            raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+        return parent_banks_view()
+
+    @app.post(
+        "/api/parent/banks/requests/{request_id}/decline",
+        response_model=list[Todo],
+        dependencies=[Depends(require_parent)],
+    )
+    def decline_bank_request(request_id: int) -> list[Todo]:
+        """Not this time: the hold ends and nothing leaves the bank."""
+        try:
+            with books.write() as connection:
+                banks.decline(connection, request_id, now=now_here())
+        except claims.ClaimError as exc:
+            raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+        with books.connect() as connection:
+            return all_todos(connection)
 
     def the_catalog() -> MealsCatalog:
         current = store.catalog.current

@@ -17,7 +17,7 @@ import sqlite3
 from datetime import date as Date
 from datetime import datetime, timedelta
 
-from . import claims, ledger, streaks
+from . import banks, claims, ledger, streaks
 from .claims import ClaimError
 from .models import ApprovalItem, Points, Rewards, Tasks
 
@@ -68,14 +68,17 @@ def queue(connection: sqlite3.Connection, tasks: Tasks, rewards: Rewards) -> lis
 
 
 def pending_count(connection: sqlite3.Connection) -> int:
-    """How many things are waiting. The only number the lock screen shows."""
+    """How many things are waiting. The only number the lock screen shows.
+
+    A cash-out or a Roblox use counts: a child is waiting on it as surely as
+    on a reward, even though it is answered from the to-do list."""
     claimed = connection.execute(
         "SELECT COUNT(*) AS n FROM claims WHERE status = 'claimed'"
     ).fetchone()["n"]
     asked = connection.execute(
         "SELECT COUNT(*) AS n FROM redemptions WHERE status = 'requested'"
     ).fetchone()["n"]
-    return int(claimed) + int(asked)
+    return int(claimed) + int(asked) + banks.pending_count(connection)
 
 
 def approve_claim(

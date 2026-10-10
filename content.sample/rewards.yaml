@@ -4,8 +4,9 @@
 # fulfilment what approving it actually does:
 #              manual    a parent does the thing and ticks it off
 #              allowance schedules `days` daily reminders for a parent to pay
-#              cash      adds `dollars` to what that child is owed
-#              policy    screen time; nothing is automated, see enabled below
+#              bank      puts `dollars` in the child's piggy bank, or `minutes`
+#                        in their Roblox bank, the moment a parent says yes
+#              policy    screen time granted by the policy plane (v4)
 # family     paid out of the family jar instead of one child's balance
 # enabled    false shows the card greyed with "Coming soon"
 version: 1
@@ -15,7 +16,10 @@ rewards:
   - {id: hot_chocolate, name: Hot chocolate out, cost: 40, fulfilment: manual, glyph: cup}
   - {id: dinner_out, name: Dinner out, cost: 150, fulfilment: manual, glyph: dinner, family: true}
   - {id: allowance_5, name: Allowance × 5 days, cost: 100, fulfilment: allowance, glyph: coin, days: 5}
-  - {id: cash_5, name: "$5 cash", cost: 50, fulfilment: cash, glyph: coin, dollars: 5}
-  # Screen time is a house rule before it is a reward: off until agreed.
-  - {id: roblox_1h, name: Roblox +1 h, cost: 100, fulfilment: policy, glyph: game, minutes: 60, enabled: false}
-  - {id: roblox_2h, name: Roblox +2 h, cost: 175, fulfilment: policy, glyph: game, minutes: 120, enabled: false}
+  # Points into the piggy bank. A child takes money out from their card
+  # (settings.banks.cash_out_min_cents) and a parent pays it from Approvals.
+  - {id: cash_5, name: "$5 cash", cost: 50, fulfilment: bank, glyph: coin, dollars: 5}
+  - {id: cash_10, name: "$10 cash", cost: 95, fulfilment: bank, glyph: coin, dollars: 10}
+  # Points into the Roblox bank. Using it is capped at settings.points.roblox_per_week.
+  - {id: roblox_1h, name: Roblox +1 h, cost: 100, fulfilment: bank, glyph: game, minutes: 60}
+  - {id: roblox_2h, name: Roblox +2 h, cost: 175, fulfilment: bank, glyph: game, minutes: 120}

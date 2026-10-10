@@ -8,7 +8,12 @@ straight back, as its own row.
 Approving is not the end of it. The ice cream has not been bought and the
 allowance has not been handed over, so approving a reward produces a to-do
 for a parent rather than marking itself done. `fulfilled` means somebody
-actually did the thing.
+actually did the thing — or, for a cash or Roblox reward, that the bank has
+it (banks.py), which is done the moment a parent says yes.
+
+A child may ask for the same reward again while the first ask waits. Each
+ask is its own redemption holding its own points, so the only limit is the
+one the balance already sets.
 """
 
 from __future__ import annotations
@@ -18,7 +23,7 @@ import sqlite3
 from datetime import date as Date
 from datetime import datetime, timedelta
 
-from . import cash, ledger
+from . import banks, ledger
 from .claims import ClaimError
 from .models import Allowance, Points, Redemption, Rewards, Todo
 
@@ -200,18 +205,26 @@ def approve(
             today=now.date(),
         )
         status = "scheduled"
-    elif reward.fulfilment == "cash":
-        # A parent's to-do — "Give Sam $5" — until Paid. What it was worth
-        # is written on the row, so a rate changed in rewards.yaml later
-        # cannot rewrite what was already earned.
-        connection.execute(
-            "UPDATE redemptions SET status = 'approved', decided_at = ?, fulfilment_ref = ?"
-            " WHERE id = ?",
-            (now.isoformat(), f"{cash.PREFIX}{reward.dollars or 0}", redemption_id),
+    elif reward.account is not None:
+        # Straight into the bank, in this transaction: there is nothing for a
+        # parent to go and do. The deposit row is the reward's whole record.
+        row_id = banks.deposit_for_redemption(
+            connection,
+            kid_id=str(row["kid_id"]),
+            account=reward.account,
+            amount=reward.deposit,
+            redemption_id=redemption_id,
+            note=reward.name,
+            now=now,
         )
-        owing = _row(connection, redemption_id)
-        assert owing is not None  # noqa: S101 - just updated
-        return _model(owing, rewards)
+        connection.execute(
+            "UPDATE redemptions SET status = 'fulfilled', decided_at = ?, fulfilment_ref = ?"
+            " WHERE id = ?",
+            (now.isoformat(), f"{banks.DEPOSIT}{row_id}", redemption_id),
+        )
+        banked = _row(connection, redemption_id)
+        assert banked is not None  # noqa: S101 - just updated
+        return _model(banked, rewards)
     elif reward.fulfilment == "meal":
         # The kid picks next, in kid mode. Until they do, it is theirs to do,
         # not a parent's.
@@ -277,14 +290,12 @@ def todos(connection: sqlite3.Connection, rewards: Rewards, today: Date) -> list
     )
     for row in rows:
         reward = rewards.by_id(str(row["reward_id"]))
-        dollars = cash.dollars_of(row["fulfilment_ref"])
         items.append(
             Todo(
                 ref=f"redemption:{int(row['id'])}",
-                kind="cash" if dollars > 0 else "manual",
+                kind="manual",
                 kid_id=str(row["kid_id"]),
                 title=reward.name if reward is not None else str(row["reward_id"]),
-                dollars=dollars or None,
                 reward_id=str(row["reward_id"]),
             )
         )
@@ -317,6 +328,14 @@ def todos(connection: sqlite3.Connection, rewards: Rewards, today: Date) -> list
 
 def finish(connection: sqlite3.Connection, ref: str, *, now: datetime) -> None:
     """A parent ticking off something they have now actually done."""
+    if ref.startswith(banks.PREFIX):
+        # Paid, or Done: a cash-out handed over or Roblox time given.
+        try:
+            request_id = int(ref.removeprefix(banks.PREFIX))
+        except ValueError as exc:
+            raise ClaimError(400, f"not something to tick off: {ref!r}") from exc
+        banks.complete(connection, request_id, now=now)
+        return
     if ref.startswith(ALLOWANCE_PREFIX):
         removed = connection.execute("DELETE FROM settings_runtime WHERE key = ?", (ref,))
         if removed.rowcount == 0:
@@ -339,10 +358,8 @@ def finish(connection: sqlite3.Connection, ref: str, *, now: datetime) -> None:
     row = _row(connection, int(redemption_id))
     if row is None:
         raise ClaimError(404, f"no redemption {redemption_id}")
-    if cash.dollars_of(row["fulfilment_ref"]) > 0:
-        # Paid: the money handed over is a payout against this reward.
-        cash.pay_for(connection, int(redemption_id), now=now)
-        return
+    if str(row["status"]) != "approved":
+        raise ClaimError(409, f"redemption {redemption_id} is already {row['status']}")
     connection.execute(
         "UPDATE redemptions SET status = 'fulfilled', fulfilment_ref = ? WHERE id = ?",
         (now.isoformat(), redemption_id),

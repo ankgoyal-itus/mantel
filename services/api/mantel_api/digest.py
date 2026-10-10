@@ -16,7 +16,7 @@ import sqlite3
 from datetime import date as Date
 from datetime import datetime, timedelta
 
-from . import feelings, ledger, out
+from . import banks, feelings, ledger, out
 from .models import Digest, DigestKid, Family, Rewards, Tasks
 from .today import MealSource
 
@@ -99,6 +99,12 @@ def build(
             name = reward.name if reward is not None else str(row["reward_id"])
             spent.append(f"{name} ({row['status']})")
 
+        # Oldest first, like the rest of the week.
+        moved = [
+            banks.describe(row)
+            for row in reversed(banks.rows(connection, kid.id, limit=500, since=start, until=end))
+        ]
+
         picked: list[str] = []
         for offset in range(7):
             when = monday + timedelta(days=offset)
@@ -116,6 +122,7 @@ def build(
                 spent=abs(int(spent_rows["total"])),
                 approved=approved,
                 redemptions=spent,
+                bank=moved,
                 picks=picked,
                 feelings=felt.get(kid.id, {}),
             )

@@ -11,6 +11,9 @@ refresh_minutes: 5
 daily_reload: "04:00"
 panchang: {masa_scheme: purnimanta, show_yoga_karana: false}
 points: {streak_bonus: 20, streak_days: 7, roblox_per_week: 2, deductions: false, parent_idle_minutes: 2}
+# The piggy bank and the Roblox bank: the least a child may cash out, in cents,
+# and the amounts of Roblox they may ask to use at once, in minutes.
+banks: {cash_out_min_cents: 2000, roblox_use_sizes: [30, 60, 120]}
 feelings: {enabled: false}
 allowance: {amount_note: "$1 a day", reminder_hour: 18}
 calendars:

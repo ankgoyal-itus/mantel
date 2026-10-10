@@ -55,6 +55,7 @@ def settings_view(settings: Settings, family: Family | None = None) -> ParentSet
             groups=festival_groups(list(settings.diet.no_non_veg_festivals)),
         ),
         points=settings.points,
+        banks=settings.banks,
         kids=[
             KidEdit(id=kid.id, name=kid.name, avatar=kid.avatar, color=kid.color)
             for kid in family.kids
@@ -162,6 +163,14 @@ def edit_settings(path: Path, edit: ParentSettings, when: datetime, validate: Va
         for key, value in edit.points.model_dump().items():
             if points.get(key) != value:
                 points[key] = value
+
+    if edit.banks is not None:
+        banks = _map(doc, "banks")
+        for key, value in edit.banks.model_dump().items():
+            if isinstance(value, list):
+                _set_list(banks, key, value)
+            elif banks.get(key) != value:
+                banks[key] = value
 
     text = serialize(doc, when)
     validate(text)

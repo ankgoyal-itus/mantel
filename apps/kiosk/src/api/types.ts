@@ -58,6 +58,9 @@ export type PointsSettings = {
   parent_idle_minutes: number
 }
 
+/** settings.banks: the least a child may cash out, and the Roblox sizes. */
+export type BankSettings = { cash_out_min_cents: number; roblox_use_sizes: number[] }
+
 export type AllowanceSettings = { amount_note: string; reminder_hour: number }
 
 export type Settings = {
@@ -73,6 +76,7 @@ export type Settings = {
   calendars: CalendarFeed[]
   diet: Diet
   points: PointsSettings
+  banks?: BankSettings
   allowance: AllowanceSettings
   feelings: { enabled: boolean }
   /** The clock and weather chip on the photo frame. */
@@ -145,7 +149,10 @@ export type PointsSummary = {
   streak_days: number
   /** Up to two rewards they have starred, in the order they chose them. */
   saving_for: SavingFor[]
-  /** Dollars their cash rewards are worth that a parent has not paid yet. */
+  /** The piggy bank, in cents, and the Roblox bank, in minutes. */
+  cash_cents?: number
+  roblox_minutes?: number
+  /** The piggy bank in whole dollars. */
   dollars_owed?: number
 }
 
@@ -169,13 +176,13 @@ export type Reward = {
   id: string
   name: string
   cost: number
-  fulfilment: 'manual' | 'allowance' | 'meal' | 'policy' | 'cash'
+  fulfilment: 'manual' | 'allowance' | 'meal' | 'policy' | 'bank'
   glyph: string
   family: boolean
   enabled: boolean
   days: number | null
   minutes: number | null
-  /** For cash: what one adds to the child's savings, in dollars. */
+  /** For bank: dollars into the piggy bank (or `minutes` into the Roblox bank). */
   dollars?: number | null
 }
 
@@ -197,7 +204,7 @@ export type Redemption = {
 
 export type Todo = {
   ref: string
-  kind: 'manual' | 'allowance' | 'cash'
+  kind: 'manual' | 'allowance' | 'cash' | 'cashout' | 'roblox'
   kid_id: string
   title: string
   day: number | null
@@ -207,6 +214,10 @@ export type Todo = {
   dollars?: number | null
   /** The reward a redemption to-do is for: "dinner_out" offers Plan it. */
   reward_id?: string | null
+  /** A bank request: the cash to pay, or the Roblox time to give. */
+  cents?: number | null
+  minutes?: number | null
+  request_id?: number | null
 }
 
 export type DigestKid = {
@@ -216,6 +227,8 @@ export type DigestKid = {
   spent: number
   approved: Record<string, string[]>
   redemptions: string[]
+  /** Money and Roblox time in and out of their banks: "+$5 · $5 cash". */
+  bank?: string[]
   picks: string[]
 }
 
@@ -455,6 +468,7 @@ export type ParentSettings = {
     groups?: FestivalGroup[]
   }
   points: PointsSettings
+  banks?: BankSettings
   kids: KidEdit[]
 }
 
@@ -602,3 +616,47 @@ export type SeriesEdit = {
 
 /** The state version the screens watch (/api/version, /api/events). */
 export type VersionInfo = { version: number; changed_at: string | null }
+
+export type BankAccount = 'cash' | 'roblox'
+
+/** One line of a child's bank: cents for cash, minutes for Roblox. */
+export type BankRow = {
+  id: number
+  kid_id: string
+  account: BankAccount
+  delta: number
+  reason_kind: 'deposit' | 'cashout' | 'use' | 'adjust'
+  reason_ref: string | null
+  note: string | null
+  actor: 'kid' | 'parent' | 'system'
+  created_at: string
+}
+
+/** A cash-out or a Roblox use, waiting on a parent. It holds its amount. */
+export type BankRequest = {
+  id: number
+  kid_id: string
+  account: BankAccount
+  amount: number
+  status: 'requested' | 'done' | 'declined'
+  requested_at: string
+  decided_at: string | null
+  bank_id: number | null
+}
+
+export type KidBank = {
+  kid_id: string
+  cash: { cents: number; available_cents: number; pending: BankRequest[] }
+  roblox: {
+    minutes: number
+    available_minutes: number
+    pending: BankRequest[]
+    uses_this_week: number
+    per_week: number
+    sizes: number[]
+  }
+  cash_out_min_cents: number
+  recent: BankRow[]
+}
+
+export type ParentBanks = { kids: KidBank[]; todos: Todo[] }

@@ -28,7 +28,7 @@ logger = logging.getLogger("mantel_api.db")
 
 #: Bumped when the schema below changes. `ensure_schema` applies everything
 #: above the file's current `user_version`, so opening an old file upgrades it.
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 #: The kid_id the family jar's rows carry. It is a ledger like any other, so
 #: the jar's balance is SUM(delta) over these rows and needs no table.
@@ -39,6 +39,10 @@ ACTORS = ("kid", "parent")
 CLAIM_STATUSES = ("claimed", "approved", "declined")
 PICK_SLOTS = ("breakfast", "lunch", "dinner")
 PICK_STATUSES = ("proposed", "chosen", "moved", "passed")
+BANK_ACCOUNTS = ("cash", "roblox")
+BANK_REASONS = ("deposit", "cashout", "use", "adjust")
+BANK_ACTORS = ("kid", "parent", "system")
+BANK_REQUEST_STATUSES = ("requested", "done", "declined")
 REDEMPTION_STATUSES = (
     "requested",
     "approved",
@@ -170,6 +174,54 @@ CREATE TABLE IF NOT EXISTS picks (
 );
 
 CREATE INDEX IF NOT EXISTS picks_by_slot ON picks (date, slot);
+
+-- Each child's bank (v3): dollars, in cents, and Roblox, in minutes. The
+-- same rules as the ledger — append-only, enforced here, and a balance that
+-- is SUM(delta) per kid and account and never a column. A deposit is an
+-- approved reward; a cashout or a use is a parent's Paid or Done on a
+-- request; an adjust is a parent's birthday money or correction.
+CREATE TABLE IF NOT EXISTS bank (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  kid_id      TEXT    NOT NULL,
+  account     TEXT    NOT NULL CHECK ({_in("account", BANK_ACCOUNTS)}),
+  delta       INTEGER NOT NULL CHECK (delta != 0),
+  reason_kind TEXT    NOT NULL CHECK ({_in("reason_kind", BANK_REASONS)}),
+  reason_ref  TEXT,
+  note        TEXT,
+  actor       TEXT    NOT NULL CHECK ({_in("actor", BANK_ACTORS)}),
+  created_at  TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS bank_by_kid ON bank (kid_id, account, created_at);
+
+CREATE TRIGGER IF NOT EXISTS bank_no_update
+BEFORE UPDATE ON bank
+BEGIN
+  SELECT RAISE(ABORT, 'bank is append-only');
+END;
+
+CREATE TRIGGER IF NOT EXISTS bank_no_delete
+BEFORE DELETE ON bank
+BEGIN
+  SELECT RAISE(ABORT, 'bank is append-only');
+END;
+
+-- A child asking to take something out: a cash-out or a Roblox use. It
+-- holds its amount while it waits, and becomes a bank row only when a parent
+-- has actually handed over the money or the time. Like a redemption, its
+-- status moves; the money only ever moves in `bank`.
+CREATE TABLE IF NOT EXISTS bank_requests (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  kid_id       TEXT    NOT NULL,
+  account      TEXT    NOT NULL CHECK ({_in("account", BANK_ACCOUNTS)}),
+  amount       INTEGER NOT NULL CHECK (amount > 0),
+  status       TEXT    NOT NULL CHECK ({_in("status", BANK_REQUEST_STATUSES)}),
+  requested_at TEXT    NOT NULL,
+  decided_at   TEXT,
+  bank_id      INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS bank_requests_by_kid ON bank_requests (kid_id, account, status);
 
 CREATE TABLE IF NOT EXISTS settings_runtime (
   key   TEXT PRIMARY KEY,
