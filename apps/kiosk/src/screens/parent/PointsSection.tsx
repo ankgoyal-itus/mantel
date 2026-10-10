@@ -131,7 +131,7 @@ export default function PointsSection({
                   <dd>{summary ? copy.parent.points.days(summary.streak_days) : '—'}</dd>
                 </div>
               </dl>
-              <CashRow kidId={kid.id} owed={summary?.dollars_owed ?? 0} nonce={nonce} />
+              <CashRow kidId={kid.id} owed={Math.floor((summary?.cash_cents ?? 0) / 100)} nonce={nonce} />
             </Card>
           )
         })}

@@ -44,7 +44,7 @@ def test_points_are_balance_week_and_streak(client: TestClient, database: Databa
         "streak_days": 0,
         "cash_cents": 0,
         "roblox_minutes": 0,
-        "dollars_owed": 0,
+        "last_deposit": None,
         # Nothing marked yet: the bars only exist once a child has chosen.
         "saving_for": [],
     }

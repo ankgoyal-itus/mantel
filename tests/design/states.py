@@ -347,7 +347,7 @@ PANCHANG_DAY = {
 
 def points(
     kid_id: str, balance: int, week: int, streak: int, saving: list | None = None,
-    dollars: int = 0,
+    cents: int = 0, minutes: int = 0,
 ) -> dict:
     return {
         "kid_id": kid_id,
@@ -358,7 +358,9 @@ def points(
         "week_days": [week - week // 3, week // 3, 0, 0, 0, 0, 0],
         "streak_days": streak,
         "saving_for": saving or [],
-        "dollars_owed": dollars,
+        "cash_cents": cents,
+        "roblox_minutes": minutes,
+        "last_deposit": None,
     }
 
 
@@ -373,10 +375,12 @@ SAVING = [
 #: Mira is mid-streak, so the flame is on screen; Kabir is not, so the
 #: absence of one is checked too. The jar has enough to be worth drawing.
 POINTS = {
-    # Fifteen dollars of cash rewards not yet handed over: on his own card,
-    # and on the parent's Points, and nowhere on the wall.
-    "mira": points("mira", 120, 35, 8, SAVING, dollars=15),
-    "kabir": points("kabir", 45, 20, 2),
+    # Fifteen dollars and two and a half hours of Roblox in her banks: the two
+    # chips on her own card, and "$15 saved · 2 h 30 min Roblox" on the wall.
+    # Kabir has an hour of Roblox and no cash, so one half of each is checked
+    # missing.
+    "mira": points("mira", 120, 35, 8, SAVING, cents=1500, minutes=150),
+    "kabir": points("kabir", 45, 20, 2, minutes=60),
     "family": points("family", 60, 0, 0),
 }
 
@@ -392,17 +396,28 @@ REWARDS = [
      "glyph": "dinner", "family": True, "enabled": True, "days": None, "minutes": None},
     {"id": "allowance_5", "name": "Allowance \u00d7 5 days", "cost": 100, "fulfilment": "allowance",
      "glyph": "coin", "family": False, "enabled": True, "days": 5, "minutes": None},
-    {"id": "cash_5", "name": "$5 cash", "cost": 50, "fulfilment": "cash",
+    {"id": "cash_5", "name": "$5 cash", "cost": 50, "fulfilment": "bank",
      "glyph": "coin", "family": False, "enabled": True, "days": None, "minutes": None,
      "dollars": 5},
-    # Screen time: off until the policy plane can enforce it.
-    {"id": "roblox_1h", "name": "Roblox +1 h", "cost": 100, "fulfilment": "policy",
-     "glyph": "game", "family": False, "enabled": False, "days": None, "minutes": 60},
-    {"id": "roblox_2h", "name": "Roblox +2 h", "cost": 175, "fulfilment": "policy",
-     "glyph": "game", "family": False, "enabled": False, "days": None, "minutes": 120},
+    {"id": "cash_10", "name": "$10 cash", "cost": 95, "fulfilment": "bank",
+     "glyph": "coin", "family": False, "enabled": True, "days": None, "minutes": None,
+     "dollars": 10},
+    # Screen time, into the Roblox bank.
+    {"id": "roblox_1h", "name": "Roblox +1 h", "cost": 100, "fulfilment": "bank",
+     "glyph": "game", "family": False, "enabled": True, "days": None, "minutes": 60},
+    {"id": "roblox_2h", "name": "Roblox +2 h", "cost": 175, "fulfilment": "bank",
+     "glyph": "game", "family": False, "enabled": True, "days": None, "minutes": 120},
 ]
 
 MY_REWARDS = [
+    # $5 asked for twice, both still waiting: the tile says "Asked · 2" and,
+    # with 120 points left after both holds, is still lit for a third.
+    {"id": 5, "kid_id": "mira", "reward_id": "cash_5", "points": 50, "status": "requested",
+     "requested_at": f"{TODAY}T15:05:00-07:00", "decided_at": None, "fulfilment_ref": None,
+     "note": None, "name": "$5 cash", "glyph": "coin"},
+    {"id": 4, "kid_id": "mira", "reward_id": "cash_5", "points": 50, "status": "requested",
+     "requested_at": f"{TODAY}T15:04:00-07:00", "decided_at": None, "fulfilment_ref": None,
+     "note": None, "name": "$5 cash", "glyph": "coin"},
     {"id": 3, "kid_id": "mira", "reward_id": "ice_cream", "points": 25, "status": "approved",
      "requested_at": f"{TODAY}T09:10:00-07:00", "decided_at": None, "fulfilment_ref": None,
      "note": None, "name": "Ice cream", "glyph": "ice-cream"},
@@ -410,6 +425,55 @@ MY_REWARDS = [
      "requested_at": f"{TODAY - timedelta(days=2)}T18:00:00-07:00", "decided_at": None,
      "fulfilment_ref": None, "note": None, "name": "Bakery treat", "glyph": "cake"},
 ]
+
+def bank_row(row_id: int, account: str, delta: int, kind: str, note: str | None,
+             days_ago: int) -> dict:
+    return {"id": row_id, "kid_id": "mira", "account": account, "delta": delta,
+            "reason_kind": kind, "reason_ref": None, "note": note, "actor": "parent",
+            "created_at": f"{TODAY - timedelta(days=days_ago)}T18:00:00-07:00"}
+
+
+def kid_bank(cents: int, minutes: int, *, uses: int = 0, pending_cents: int = 0,
+             kid_id: str = "mira") -> dict:
+    """GET /api/banks/{kid}: both accounts, the setting's sizes, ten rows a side."""
+    pending = (
+        [{"id": 1, "kid_id": kid_id, "account": "cash", "amount": pending_cents,
+          "status": "requested", "requested_at": f"{TODAY}T15:20:00-07:00",
+          "decided_at": None, "bank_id": None}]
+        if pending_cents else []
+    )
+    return {
+        "kid_id": kid_id,
+        "cash": {"cents": cents, "available_cents": cents - pending_cents, "pending": pending},
+        "roblox": {"minutes": minutes, "available_minutes": minutes, "pending": [],
+                   "uses_this_week": uses, "per_week": 2, "sizes": [30, 60, 120]},
+        "cash_out_min_cents": 2000,
+        "recent": [
+            bank_row(20, "cash", 500, "deposit", "$5 cash", 0),
+            bank_row(19, "roblox", 60, "deposit", "Roblox +1 h", 1),
+            bank_row(18, "cash", 500, "deposit", "Ice cream day", 1),
+            bank_row(17, "roblox", -60, "use", "Roblox", 2),
+            bank_row(16, "cash", 1000, "adjust", "Birthday from Grandma", 3),
+            bank_row(15, "cash", -2000, "cashout", "cashed out", 4),
+            bank_row(14, "roblox", 120, "deposit", "Roblox +2 h", 4),
+            bank_row(13, "cash", 500, "deposit", "$5 cash", 5),
+            bank_row(12, "cash", 500, "deposit", "$5 cash", 6),
+            bank_row(11, "cash", 1000, "deposit", "$10 cash", 6),
+            bank_row(10, "roblox", 30, "adjust", "Rainy Sunday", 6),
+            bank_row(9, "cash", 500, "deposit", "$5 cash", 6),
+            bank_row(8, "cash", 500, "deposit", "$5 cash", 6),
+        ],
+    }
+
+
+#: Mira's banks as her points say: $15, under the $20 minimum, and two and a
+#: half hours of Roblox with one of her two uses this week gone.
+MIRA_BANK = kid_bank(1500, 150, uses=1)
+#: Twenty, so the button offers "Cash out $20"; and, once asked, held.
+MIRA_BANK_20 = kid_bank(2000, 150, uses=1)
+MIRA_BANK_ASKED = kid_bank(2000, 150, uses=1, pending_cents=2000)
+#: Both uses this week gone: every size held back, "2 of 2 this week".
+MIRA_BANK_CAPPED = kid_bank(1500, 150, uses=2)
 
 #: What the picker offers for tomorrow: one everyday dish, one out of reach on
 #: a veg day, one treat behind a reward.
@@ -470,6 +534,9 @@ ROUTES = {
     "/api/rewards": REWARDS,
     "/api/redemptions/mira": MY_REWARDS,
     "/api/redemptions/kabir": [],
+    "/api/banks/mira": MIRA_BANK,
+    "/api/banks/kabir": kid_bank(0, 60, kid_id="kabir"),
+    "/api/banks/mira/cashout": MIRA_BANK_ASKED,
     "/api/picks/options": PICK_OPTIONS,
     "/api/parent/approvals": APPROVALS,
     "/api/parent/todos": TODOS,

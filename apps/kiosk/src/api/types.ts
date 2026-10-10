@@ -152,8 +152,8 @@ export type PointsSummary = {
   /** The piggy bank, in cents, and the Roblox bank, in minutes. */
   cash_cents?: number
   roblox_minutes?: number
-  /** The piggy bank in whole dollars. */
-  dollars_owed?: number
+  /** The newest reward approved into either bank, for the card's toast. */
+  last_deposit?: BankRow | null
 }
 
 /** Money handed over for cash rewards. */

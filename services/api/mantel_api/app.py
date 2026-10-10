@@ -1375,7 +1375,7 @@ def create_app(
                 ),
                 cash_cents=banks.balance(connection, kid_id, "cash"),
                 roblox_minutes=banks.balance(connection, kid_id, "roblox"),
-                dollars_owed=banks.balance(connection, kid_id, "cash") // 100,
+                last_deposit=banks.last_deposit(connection, kid_id),
             )
 
     @app.get(

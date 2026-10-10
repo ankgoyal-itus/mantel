@@ -549,6 +549,12 @@ html[data-theme='night'] .fam-jar-some {
     font-family: var(--display);
     font-size: var(--t-heading);
   }
+
+  /* Beside the name at 352 there is room for "$15 saved · 2 h…" and no more;
+     the rest is one tap away, on their own card. */
+  .kid-budgeted .bank-caption {
+    max-width: 136px;
+  }
 }
 
 /* -- points and claims ---------------------------------------------------- */
@@ -1519,4 +1525,61 @@ html[data-theme='night'] .dp-decide {
 
 .chip-task-deciding .row-decide {
   margin-left: 10px;
+}
+
+/* What is in a child's banks, under their points on the wall: "$15 saved ·
+   2 h Roblox". A caption in --muted — it is theirs, and the card's number is
+   still the points. */
+.bank-caption {
+  display: block;
+  max-width: 220px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-caption);
+  font-weight: 400;
+  line-height: 18px;
+}
+
+/* For four seconds after a parent says yes to a cash or Roblox reward: one
+   line, floating over the foot of the card. A 200ms fade in and out, and the
+   only motion the banks add. */
+.bank-toast {
+  position: absolute;
+  left: var(--pad);
+  right: var(--pad);
+  bottom: var(--gap);
+  margin: 0;
+  padding: 12px var(--gap);
+  border-radius: var(--r-button);
+  background: var(--card);
+  box-shadow: var(--shadow-float);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+  animation: bank-toast 4000ms linear both;
+}
+
+@keyframes bank-toast {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bank-toast {
+    animation: none;
+  }
 }

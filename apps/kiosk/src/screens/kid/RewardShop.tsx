@@ -5,6 +5,7 @@ import { askForReward, markSavingFor, myRewards } from '../../api/points'
 import type { PointsSummary, Redemption, Reward, TaskEntry } from '../../api/types'
 import Icon, { type IconName } from '../../components/icons/Icon'
 import { copy } from '../../copy'
+import { dollars, duration } from './bank'
 
 /** What each fulfilment kind is called once a parent has said yes. */
 const STATE: Record<Redemption['status'], string> = {
@@ -16,17 +17,20 @@ const STATE: Record<Redemption['status'], string> = {
   refunded: copy.shop.declined,
 }
 
-/** What a row says it came to. A cash reward says how much, and whether it
-    is still coming or has been handed over. */
+/** What a row says it came to. */
 function stateOf(row: Redemption): string {
-  const cash = row.fulfilment_ref?.match(/^cash:(\d+)$/)
-  if (cash && row.status === 'approved') {
-    return copy.shop.cashComing(Number(cash[1]))
-  }
-  if (cash && row.status === 'fulfilled') {
-    return copy.shop.cashPaid(Number(cash[1]))
-  }
   return STATE[row.status]
+}
+
+/** Where a cash or Roblox reward goes, said on its tile: "$5 → piggy bank". */
+function destination(reward: Reward): string | null {
+  if (reward.fulfilment !== 'bank') {
+    return null
+  }
+  if (reward.dollars) {
+    return copy.shop.toPiggy(dollars(reward.dollars * 100))
+  }
+  return reward.minutes ? copy.shop.toRoblox(duration(reward.minutes)) : null
 }
 
 function glyphOf(name: string): IconName {
@@ -104,9 +108,14 @@ export default function RewardShop({
     }
   }, [kidId, refresh])
 
-  const asked = new Set(
-    mine.filter((row) => row.status === 'requested').map((row) => row.reward_id),
-  )
+  // How many of each reward are waiting on a parent. A child may ask again
+  // while one waits, as long as the points cover it: each ask holds its own.
+  const asked = new Map<string, number>()
+  for (const row of mine) {
+    if (row.status === 'requested') {
+      asked.set(row.reward_id, (asked.get(row.reward_id) ?? 0) + 1)
+    }
+  }
   // What they are already saving for, from the summary the card draws bars
   // from, so the star and the bar can never disagree.
   const starred = new Set((points?.saving_for ?? []).map((pick) => pick.reward_id))
@@ -180,13 +189,16 @@ export default function RewardShop({
 
       <div className="shop-grid">
         {shown.map((reward) => {
+          // The balance has already given up the points of every ask still
+          // waiting, so affordable here means affordable once more.
           const affordable = reward.enabled && balanceFor(reward) >= reward.cost
-          const waiting = asked.has(reward.id)
+          const waiting = asked.get(reward.id) ?? 0
+          const goesTo = destination(reward)
           // Drawn in full, though it cannot be tapped yet: this is one of the
           // three a child is closest to, and it is being shown as the target.
           const isGoal = goals.has(reward.id)
           const classes = ['shop-card']
-          if ((affordable || isGoal) && !waiting) {
+          if (affordable || isGoal) {
             classes.push('shop-card-open')
           } else {
             classes.push('shop-card-dim')
@@ -214,12 +226,12 @@ export default function RewardShop({
             <button
               type="button"
               className={classes.join(' ')}
-              disabled={!affordable || waiting || busy}
+              disabled={!affordable || busy}
               onClick={() => setAsking(reward)}
             >
               <Icon
                 name={glyphOf(reward.glyph)}
-                size={(affordable || isGoal) && !waiting ? 48 : 32}
+                size={affordable || isGoal ? 48 : 32}
                 className="shop-glyph"
               />
               <span className="shop-name">{reward.name}</span>
@@ -228,12 +240,14 @@ export default function RewardShop({
                 // A lock says "not yet" faster than two words do, and leaves
                 // the tile looking like the others rather than like an error.
                 <Icon name="lock" size={20} className="shop-state-glyph" />
-              ) : waiting ? (
-                <span className="shop-state">{copy.shop.asked}</span>
+              ) : waiting > 0 ? (
+                <span className="shop-state">{copy.shop.askedCount(waiting)}</span>
               ) : !affordable ? (
                 <span className={isGoal ? 'shop-state shop-state-goal' : 'shop-state'}>
                   {copy.shop.shortfall(reward.cost - balanceFor(reward))}
                 </span>
+              ) : goesTo ? (
+                <span className="shop-state">{goesTo}</span>
               ) : reward.family ? (
                 // A family reward is paid from the jar, so the jar is the
                 // number that matters beside it.

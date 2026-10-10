@@ -110,6 +110,16 @@ def rows(
     return [BankRow.model_validate(dict(row)) for row in connection.execute(sql, params)]
 
 
+def last_deposit(connection: sqlite3.Connection, kid_id: str) -> BankRow | None:
+    """The newest approved reward in either account, for the card's toast."""
+    row = connection.execute(
+        "SELECT * FROM bank WHERE kid_id = ? AND reason_kind = 'deposit'"
+        " ORDER BY id DESC LIMIT 1",
+        (kid_id,),
+    ).fetchone()
+    return BankRow.model_validate(dict(row)) if row is not None else None
+
+
 def _request(row: sqlite3.Row) -> BankRequest:
     return BankRequest.model_validate(dict(row))
 

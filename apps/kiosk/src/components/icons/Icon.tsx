@@ -36,6 +36,7 @@ export type IconName =
   | 'house'
   | 'frame'
   | 'game'
+  | 'piggy'
   | 'star'
   | 'check'
   | 'gear'
@@ -82,6 +83,8 @@ const PATHS: Record<IconName, string> = {
   // The family jar: a lid, and a body with a line of what is in it.
   jar: 'M8 3.5h8v3H8ZM7 6.5h10a1 1 0 0 1 1 1V18a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 18V7.5a1 1 0 0 1 1-1ZM6 12.5h12',
   game: 'M8.5 9.5h7a5 5 0 0 1 4.9 6l-.4 2.2a2.2 2.2 0 0 1-4 1L14 16.5h-4l-2 2.2a2.2 2.2 0 0 1-4-1l-.4-2.2a5 5 0 0 1 4.9-6ZM7.5 12v2.5M6.25 13.25h2.5M15.5 12.5h.01M17.5 14.5h.01',
+  // A piggy bank, side on: body, snout, ear, two legs and the coin slot.
+  piggy: 'M18.5 11.5c-.8-2.7-3.6-4.6-7-4.6-4 0-7.3 2.6-7.3 5.9 0 1.9 1.1 3.6 2.8 4.7l.5 2.5h2.4l.5-1.5c.7.1 1.4.2 2.1.2s1.4-.1 2.1-.2l.5 1.5h2.4l.6-2.8c.8-.5 1.5-1.2 2-2h1.6v-3.7h-1.2ZM9.5 9.3h3.5M15.5 11.5h.01M14.5 7.4l.8-2.4 1.9 2.8M4.3 11.5c-1 0-1.8-.7-1.8-1.6',
   star: 'M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.1l-5.3 2.8 1-5.8-4.2-4.1 5.9-.9L12 3.8Z',
   // The parent screen's own: a settings app needs a handful a wall does not.
   check: 'M4.5 12.5l5 5 10-11',

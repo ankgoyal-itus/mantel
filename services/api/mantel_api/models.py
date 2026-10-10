@@ -1164,6 +1164,23 @@ class VersionInfo(BaseModel):
     changed_at: str | None = None
 
 
+BankAccount = Literal["cash", "roblox"]
+
+
+class BankRow(BaseModel):
+    """One line of a child's bank: cents for cash, minutes for Roblox."""
+
+    id: int
+    kid_id: str
+    account: BankAccount
+    delta: int
+    reason_kind: Literal["deposit", "cashout", "use", "adjust"]
+    reason_ref: str | None = None
+    note: str | None = None
+    actor: Literal["kid", "parent", "system"]
+    created_at: str
+
+
 class PointsSummary(BaseModel):
     """What a kid's card shows: the number, the week, and the run of days."""
 
@@ -1182,8 +1199,9 @@ class PointsSummary(BaseModel):
     #: minutes: balances, pending requests not taken off.
     cash_cents: int = 0
     roblox_minutes: int = 0
-    #: The piggy bank in whole dollars, for the card that still reads it.
-    dollars_owed: int = 0
+    #: The newest reward approved into either bank, so a card can say so
+    #: once: "+$5 in your piggy bank".
+    last_deposit: BankRow | None = None
 
 
 class Payout(BaseModel):
@@ -1509,23 +1527,6 @@ class Digest(BaseModel):
     kids: list[DigestKid] = Field(default_factory=list)
     #: The meals eaten out that week: "Sat dinner: Out · Taqueria Luna".
     out: list[str] = Field(default_factory=list)
-
-
-BankAccount = Literal["cash", "roblox"]
-
-
-class BankRow(BaseModel):
-    """One line of a child's bank: cents for cash, minutes for Roblox."""
-
-    id: int
-    kid_id: str
-    account: BankAccount
-    delta: int
-    reason_kind: Literal["deposit", "cashout", "use", "adjust"]
-    reason_ref: str | None = None
-    note: str | None = None
-    actor: Literal["kid", "parent", "system"]
-    created_at: str
 
 
 class BankRequest(BaseModel):

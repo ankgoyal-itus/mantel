@@ -110,6 +110,8 @@ def test_approving_deposits_and_leaves_nothing_to_do(
     # The points were taken at the ask; approving moves none.
     assert points(client, "mira")["balance"] == 10
     assert points(client, "mira")["cash_cents"] == 500
+    deposit = points(client, "mira")["last_deposit"]
+    assert (deposit["id"], deposit["note"]) == (row["id"], "$5 cash")
     assert client.get("/api/parent/todos").json() == []
 
 

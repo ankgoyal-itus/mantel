@@ -11,6 +11,8 @@ import '../../styles/kid.css'
 import { kidCardHeight, kidChipWidth } from '../day/budget'
 import KidColumn from '../day/KidColumn'
 import type { CardArea } from '../../shell/tap'
+import { dollars, duration } from './bank'
+import BankSheet from './BankSheet'
 import JarSheet from './JarSheet'
 import ThisWeek from './ThisWeek'
 import MealPicker from './MealPicker'
@@ -123,7 +125,9 @@ export default function KidScreen({
   // this is so a tap lands on the screen now rather than in five minutes.
   const [changed, setChanged] = useState<Record<string, ClaimStatus>>({})
   const [recent, setRecent] = useState<Recent | null>(null)
-  const [sheet, setSheet] = useState<'none' | 'shop' | 'jar' | 'meal'>(startOn)
+  const [sheet, setSheet] = useState<'none' | 'shop' | 'jar' | 'meal' | 'cash' | 'roblox'>(
+    startOn,
+  )
 
   // The five seconds a claim can be taken back in end on their own, and the
   // chip's "Tap again to undo" settles to "Waiting · +2".
@@ -272,15 +276,13 @@ export default function KidScreen({
               chipWidth={kidChipWidth(width)}
               onClaim={claim}
               underBalance={
-                // Their cash, on their own card and nowhere else: money on
-                // the kitchen wall is a thing siblings compare.
-                (points[kid.id]?.dollars_owed ?? 0) > 0 ? (
-                  <span className="balance-under">
-                    <span className="cash-saved">
-                      {copy.kid.cashSaved(points[kid.id]?.dollars_owed ?? 0)}
-                    </span>
-                  </span>
-                ) : null
+                // Their two banks, each a chip that opens it. Nothing for an
+                // empty one: a "$0" is a thing they do not have.
+                <BankChips
+                  cents={points[kid.id]?.cash_cents ?? 0}
+                  minutes={points[kid.id]?.roblox_minutes ?? 0}
+                  onOpen={setSheet}
+                />
               }
               belowTasks={
                 <ThisWeek points={points[kid.id] ?? null} today={(new Date().getDay() + 6) % 7} />
@@ -322,6 +324,15 @@ export default function KidScreen({
         ) : null}
       </div>
 
+      {sheet === 'cash' || sheet === 'roblox' ? (
+        <BankSheet
+          kidId={kid.id}
+          account={sheet}
+          onDone={() => setSheet('none')}
+          onChanged={onChanged}
+        />
+      ) : null}
+
       {sheet === 'jar' ? (
         <JarSheet
           kidId={kid.id}
@@ -332,5 +343,47 @@ export default function KidScreen({
         />
       ) : null}
     </div>
+  )
+}
+
+/** The piggy bank and the Roblox bank, under the points: small, in --muted,
+    and each the way into its own sheet. */
+function BankChips({
+  cents,
+  minutes,
+  onOpen,
+}: {
+  cents: number
+  minutes: number
+  onOpen: (account: 'cash' | 'roblox') => void
+}) {
+  if (cents <= 0 && minutes <= 0) {
+    return null
+  }
+  return (
+    <span className="bank-chips">
+      {cents > 0 ? (
+        <button
+          type="button"
+          className="bank-chip"
+          aria-label={`${copy.bank.piggy}, ${dollars(cents)}`}
+          onClick={() => onOpen('cash')}
+        >
+          <Icon name="piggy" size={20} />
+          {dollars(cents)}
+        </button>
+      ) : null}
+      {minutes > 0 ? (
+        <button
+          type="button"
+          className="bank-chip"
+          aria-label={`${copy.bank.roblox}, ${duration(minutes)}`}
+          onClick={() => onOpen('roblox')}
+        >
+          <Icon name="game" size={20} />
+          {duration(minutes)}
+        </button>
+      ) : null}
+    </span>
   )
 }

@@ -25,6 +25,8 @@ import type { WeekMarks } from './myWeek'
 import TaskChip from './TaskChip'
 import { earnedBy, stillToEarn } from './taskList'
 import { cleanTitle } from './titles'
+import { caption } from '../kid/bank'
+import { useDepositToast } from '../kid/depositToast'
 
 /**
  * Where no budget is passed (the rail, and tests): two agenda rows. The
@@ -207,6 +209,7 @@ export default function KidColumn({
           agenda: classified.length,
           chips,
           saving: (points?.saving_for.length ?? 0) > 0,
+          bank: (points?.cash_cents ?? 0) > 0 || (points?.roblox_minutes ?? 0) > 0,
         })
       : null
   const agenda = classified.slice(0, plan ? plan.agenda : kidPlan ? kidPlan.agenda : MAX_AGENDA)
@@ -291,11 +294,27 @@ export default function KidColumn({
     </span>
   ) : null
 
+  // What is in their piggy bank and Roblox bank, as one caption under the
+  // points on the wall ("$15 saved · 2 h Roblox"); kid mode draws the two
+  // as chips that open each bank instead. Nothing at all while both are empty.
+  const banked = claimable || compact ? '' : caption(points?.cash_cents ?? 0, points?.roblox_minutes ?? 0)
+  const under =
+    underBalance ??
+    (banked ? (
+      <>
+        <span className="bank-caption clamp-1">{banked}</span>
+        {miniBar}
+      </>
+    ) : (
+      miniBar
+    ))
+  const toast = useDepositToast(kid.id, compact ? null : points?.last_deposit)
+
   const head = (
     <>
       <Avatar name={kid.name} avatar={kid.avatar} size={avatarSize} nodding={nodding} />
       <h2 className="kid-name">{kid.name}</h2>
-      <Balance points={points} large={claimable} under={underBalance ?? miniBar} />
+      <Balance points={points} large={claimable} under={under} />
     </>
   )
 
@@ -504,6 +523,11 @@ export default function KidColumn({
       ) : null}
 
       {footer}
+      {toast ? (
+        <p className="bank-toast" role="status">
+          {toast}
+        </p>
+      ) : null}
       <Confetti fire={cheer} tokens={CHEER_TOKENS} />
     </section>
   )

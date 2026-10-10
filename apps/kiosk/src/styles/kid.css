@@ -241,6 +241,13 @@
 /* On one of the three a child is nearest, the shortfall is the point of the
    tile rather than the reason it is greyed out, so it is said in their own
    colour and at full strength. */
+/* On a lit tile — a bank reward saying where it goes, or how many are
+   asked for — the words sit on the kid's tint, where --muted falls under
+   4.5:1. The ink does not. */
+.shop-card-open .shop-state {
+  color: var(--fg);
+}
+
 .shop-state-goal {
   color: var(--kid-ink);
   font-weight: 700;
@@ -622,19 +629,6 @@
   vertical-align: -6px;
 }
 
-/* Cash saved, on the line under the balance. */
-.balance-under {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gap);
-}
-
-.cash-saved {
-  font-family: var(--body);
-  font-size: var(--t-body);
-  font-weight: 700;
-  color: var(--ink-good);
-}
 
 /* The jar: the one they do rarely, so the small button at the end of the
    row rather than a third tile the size of the other two. */
@@ -991,4 +985,152 @@
   .kid-mode-main .chip-task-pulse {
     animation: none;
   }
+}
+
+/* -- the banks ------------------------------------------------------------
+   The piggy bank and the Roblox bank: two small chips under the points, in
+   --muted, each the way into its own sheet. Small to look at and 44px to
+   tap — the chip is the hit area, and only its words are drawn. */
+
+.bank-chips {
+  display: flex;
+  gap: var(--unit);
+  margin-right: calc(var(--unit) * -1);
+}
+
+.bank-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 var(--unit);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bank-chip:active {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+
+/* The sheet: the floating surface, wider than a confirm. The bank's name
+   and what is in it across the top; under them, side by side, what it can
+   do and its last ten rows — a screen that never scrolls has no room to
+   stack them. */
+.bank-sheet {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--pad);
+  width: 760px;
+  max-width: 90%;
+  text-align: left;
+}
+
+.bank-head {
+  grid-column: 1 / -1;
+  margin-bottom: var(--gap);
+}
+
+.bank-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* Level with the first row beside it. */
+.bank-side > :first-child {
+  margin-top: 0;
+}
+
+.bank-title {
+  display: flex;
+  align-items: center;
+  gap: var(--unit);
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: var(--weight-display);
+  color: var(--fg);
+}
+
+.bank-glyph {
+  color: var(--kid-ink);
+}
+
+/* What is in it, large and in their colour: the number they opened this for. */
+.bank-balance {
+  margin: var(--unit) 0 0;
+  font-family: var(--display);
+  font-size: var(--t-display);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  color: var(--kid-ink);
+  white-space: nowrap;
+}
+
+.bank-note {
+  margin: var(--unit) 0 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: var(--t-body);
+}
+
+.bank-waiting {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.bank-ask {
+  margin-top: var(--gap);
+}
+
+.bank-ask .confirm-actions,
+.bank-ask .choices {
+  justify-content: flex-start;
+}
+
+.bank-question {
+  margin: 0 0 var(--gap);
+  font-family: var(--display);
+  font-size: var(--t-heading);
+  font-weight: var(--weight-display);
+}
+
+.bank-size {
+  min-width: 88px;
+  min-height: 56px;
+  font-size: var(--t-body);
+  font-weight: 700;
+}
+
+.bank-history {
+  align-self: start;
+  margin: 0;
+}
+
+.bank-rows {
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.bank-row {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 1.4;
+}
+
+.bank-close {
+  grid-column: 1 / -1;
+  margin-top: var(--gap);
 }

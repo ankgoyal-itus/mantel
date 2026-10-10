@@ -6,7 +6,17 @@
  * until a parent decides, which happens on the parent screen.
  */
 
-import type { Claim, DayPicks, Feeling, PickOption, PinState, PointsSummary, Redemption, SlotView } from './types'
+import type {
+  Claim,
+  DayPicks,
+  Feeling,
+  KidBank,
+  PickOption,
+  PinState,
+  PointsSummary,
+  Redemption,
+  SlotView,
+} from './types'
 
 const TIMEOUT_MS = 8000
 
@@ -116,4 +126,19 @@ export function withdrawPick(pickId: number, kidId: string): Promise<unknown> {
     "Where?" field. */
 export function recentPlaces(): Promise<string[]> {
   return send<string[]>('/api/places/recent', 'GET')
+}
+
+/** A child's piggy bank and Roblox bank, and what is waiting on a parent. */
+export function getBank(kidId: string): Promise<KidBank> {
+  return send<KidBank>(`/api/banks/${kidId}`, 'GET')
+}
+
+/** Ask to take money out. It is held until a parent pays it. */
+export function askCashOut(kidId: string, cents: number): Promise<KidBank> {
+  return send<KidBank>(`/api/banks/${kidId}/cashout`, 'POST', { cents })
+}
+
+/** Ask to use Roblox time. It is held until a parent gives it. */
+export function askRobloxTime(kidId: string, minutes: number): Promise<KidBank> {
+  return send<KidBank>(`/api/banks/${kidId}/roblox/use`, 'POST', { minutes })
 }

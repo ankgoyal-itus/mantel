@@ -185,6 +185,9 @@ export const KID_CARD = {
   save: 57,
   /** Rewards, Pick a meal and the jar. */
   actions: 60,
+  /** The bank chips under the balance: 44px to tap beneath the 34px number,
+      which is 78 of a head drawn at 72 — and 8 to spare. */
+  bank: 8,
 } as const
 
 /** Agenda rows on the open card when there is room for them. */
@@ -207,6 +210,7 @@ export function planKidCard({
   agenda,
   chips,
   saving,
+  bank = false,
 }: {
   height: number
   agenda: number
@@ -214,6 +218,8 @@ export function planKidCard({
   chips: number
   /** Whether a reward is starred. */
   saving: boolean
+  /** Whether either bank has anything in it, so its chips are drawn. */
+  bank?: boolean
 }): { agenda: number } {
   const fixed =
     KID_CARD.chrome +
@@ -223,7 +229,8 @@ export function planKidCard({
     chips +
     KID_CARD.week +
     KID_CARD.actions +
-    (saving ? KID_CARD.save : 0)
+    (saving ? KID_CARD.save : 0) +
+    (bank ? KID_CARD.bank : 0)
   // The chips are what a child came to tap, so they never give; the agenda
   // does, down to one row, the rest counted on the headline.
   let shown = Math.min(agenda, KID_MAX_AGENDA)

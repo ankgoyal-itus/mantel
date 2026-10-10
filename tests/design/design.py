@@ -53,6 +53,8 @@ from states import (  # noqa: E402
     FOUR_ROWS,
     HOUSE_CONFIG,
     LIGHT_PHOTO,
+    MIRA_BANK_20,
+    MIRA_BANK_CAPPED,
     NEARLY,
     OCTOBER_MONTH,
     PARENT_ROUTES,
@@ -145,6 +147,9 @@ ALLOWED_ANIMATIONS = {
     # the chip a kid tapped on the wall pulsing once in their own screen.
     "keypad-leave",
     "chip-pulse",
+    # v3: "+$5 in your piggy bank" on a kid's card after a yes, 200ms in and
+    # out over four seconds.
+    "bank-toast",
 }
 
 
@@ -290,10 +295,27 @@ STATES = [
     # A card with a code on it: the kid's own pad, in their colour.
     State("kid-pad", Time(15, 30), steps=("kid", "pad-kid"),
           api={"/api/kids/pins": {"pins": {"mira": True, "kabir": False}}}),
-    State("kid-shop", Time(15, 30), steps=("kid", "shop")),
-    # Everything in the shop, the Roblox rows among it, greyed until the
-    # policy plane can enforce them.
+    # $5 asked for twice and still lit for a third, and where each bank
+    # reward goes: "$10 → piggy bank", "1 h → Roblox bank".
+    State("kid-shop", Time(15, 30), steps=("kid", "shop", "shop-banks")),
+    # Everything in the shop, the Roblox rows among it.
     State("kid-shop-all", Time(15, 30), steps=("kid", "shop", "shop-all")),
+    # v3, the banks. The two chips under her points, and the piggy bank at
+    # $15: "Cash out $20" held back, "Save $5 more" under it, the balance in
+    # her colour at the contrast it has to clear.
+    State("kid-bank-cash", Time(15, 30),
+          steps=("kid", "kid-chips", "bank-cash", "bank-short", "bank-balance-contrast")),
+    # At $20 the button offers it; a tap asks in place and the sheet then
+    # says it is waiting.
+    State("kid-bank-asked", Time(15, 30), steps=("kid", "bank-cash", "bank-ask"),
+          api={"/api/banks/mira": MIRA_BANK_20}),
+    # The Roblox bank with both uses this week gone: every size held back.
+    State("kid-bank-roblox", Time(15, 30),
+          steps=("kid", "bank-roblox", "bank-capped", "bank-balance-contrast"),
+          api={"/api/banks/mira": MIRA_BANK_CAPPED}),
+    # The same two values on the wall, as one caption under each balance.
+    State("day-banks", Time(15, 30), steps=("day-bank-caption",), viewports=DASHBOARD,
+          shots=False),
     # The two ends of the shop. At zero the grid is a shortlist of three in
     # full colour with a line above it naming the cheapest chore and the
     # cheapest reward; at fifteen exactly one thing is affordable, which is
@@ -709,6 +731,90 @@ def run_steps(page: Page, state: State, stub: Stub) -> None:
             )
             if found != [False]:
                 raise DesignFailure(f"the shared school day is drawn {found} in Coming up")
+        elif step == "shop-banks":
+            tiles = page.evaluate(
+                """() => Object.fromEntries([...document.querySelectorAll('.shop-card')]
+                  .map((tile) => [tile.querySelector('.shop-name').textContent,
+                    [tile.querySelector('.shop-state')?.textContent ?? '',
+                     tile.classList.contains('shop-card-open'), tile.disabled]]))"""
+            )
+            wanted = {
+                "$5 cash": ["Asked · 2", True, False],
+                "$10 cash": ["$10 → piggy bank", True, False],
+                "Roblox +1 h": ["1 h → Roblox bank", True, False],
+            }
+            wrong = {name: tiles.get(name) for name, want in wanted.items()
+                     if tiles.get(name) != want}
+            if wrong:
+                raise DesignFailure(f"bank tiles in the shop: {wrong}")
+        elif step == "kid-chips":
+            chips = page.locator(".kid-mode-main .bank-chip").all_inner_texts()
+            if [chip.strip() for chip in chips] != ["$15", "2 h 30 min"]:
+                raise DesignFailure(f"bank chips under the balance: {chips}")
+        elif step in ("bank-cash", "bank-roblox"):
+            page.click(f".bank-chip >> nth={0 if step == 'bank-cash' else 1}")
+            page.wait_for_selector(".bank-sheet .bank-rows", timeout=10000)
+            page.wait_for_timeout(300)
+        elif step == "bank-short":
+            button = page.locator(".bank-out")
+            text = page.locator(".bank-sheet").inner_text()
+            if button.inner_text() != "Cash out $20" or button.is_enabled() \
+                    or "Save $5 more" not in text:
+                raise DesignFailure(f"cash out under the minimum: {text!r}")
+        elif step == "bank-ask":
+            page.click(".bank-out")
+            question = page.locator(".bank-question").inner_text()
+            if question != "Ask Mom or Dad for $20?":
+                raise DesignFailure(f"the confirm in place says {question!r}")
+            page.click(".bank-ask .decide-yes")
+            page.wait_for_selector(".bank-waiting", timeout=5000)
+            page.wait_for_timeout(200)
+            sent = [w for w in stub.writes if w[1] == "/api/banks/mira/cashout"]
+            if sent != [("POST", "/api/banks/mira/cashout", {"cents": 2000})]:
+                raise DesignFailure(f"cash out sent {sent}")
+            if page.locator(".bank-waiting").inner_text() != "Asked · waiting for Mom or Dad":
+                raise DesignFailure("the sheet does not say it is waiting")
+            sheet = page.locator(".bank-sheet").inner_text()
+            if page.locator(".bank-out").count() or "more" in sheet:
+                raise DesignFailure("the sheet still offers a cash-out it is holding")
+        elif step == "bank-capped":
+            sizes = page.evaluate(
+                """() => [...document.querySelectorAll('.bank-size')]
+                  .map((b) => [b.textContent, b.disabled])"""
+            )
+            text = page.locator(".bank-sheet").inner_text()
+            if sizes != [["30 min", True], ["1 h", True], ["2 h", True]] \
+                    or "2 of 2 this week" not in text:
+                raise DesignFailure(f"Roblox at the weekly cap: {sizes} {text!r}")
+        elif step == "bank-balance-contrast":
+            # The balance in the kid's colour, on the sheet: 4.5:1 in both
+            # palettes, though it is large enough to need only 3.
+            ratio = page.evaluate(
+                """() => {
+                  const rgba = (v) => { const p = (v.match(/[\\d.]+/g) ?? []).map(Number);
+                    const unit = v.startsWith('color(') ? 255 : 1;
+                    return [p[0] * unit, p[1] * unit, p[2] * unit, p[3] ?? 1]; };
+                  const ch = (v) => { const c = v / 255;
+                    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+                  const lum = ([r, g, b]) => 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+                  const el = document.querySelector('.bank-balance');
+                  const bg = rgba(getComputedStyle(el.closest('.confirm-card')).backgroundColor);
+                  const fg = rgba(getComputedStyle(el).color);
+                  const over = fg.slice(0, 3).map((c, i) => c * fg[3] + bg[i] * (1 - fg[3]));
+                  const [a, b] = [lum(over), lum(bg)].sort((x, y) => y - x);
+                  return Math.round((a + 0.05) / (b + 0.05) * 100) / 100;
+                }"""
+            )
+            if ratio < 4.5:
+                raise DesignFailure(f"the bank balance is {ratio}:1 on its sheet")
+        elif step == "day-bank-caption":
+            captions = page.evaluate(
+                """() => Object.fromEntries(['mira', 'kabir'].map((kid) => [kid,
+                  document.querySelector(`[data-kid-card="${kid}"] .bank-caption`)
+                    ?.textContent ?? null]))"""
+            )
+            if captions != {"mira": "$15 saved · 2 h 30 min Roblox", "kabir": "1 h Roblox"}:
+                raise DesignFailure(f"bank captions on the wall: {captions}")
         elif step == "shop-all":
             page.click(".shop-toggle")
             page.wait_for_timeout(300)

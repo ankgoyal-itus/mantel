@@ -114,9 +114,37 @@ export const copy = {
     // The strip under the routines on their own card.
     thisWeekTitle: 'This week',
     thisWeekSaid: (points: number) => `This week, ${points} points`,
-    // Cash rewards approved and not yet handed over, added up.
-    cashSaved: (dollars: number) => `$${dollars} saved`,
     pickMeal: 'Pick a meal',
+  },
+
+  // The piggy bank and the Roblox bank: on a kid's own card, and the sheet
+  // each one opens. Amounts arrive already said ("$15", "2 h 30 min").
+  bank: {
+    piggy: 'Piggy bank',
+    roblox: 'Roblox bank',
+    // The DAY card's caption under the balance: "$15 saved · 2 h Roblox".
+    saved: (amount: string) => `${amount} saved`,
+    robloxTime: (amount: string) => `${amount} Roblox`,
+    // What is left to ask for while something is waiting.
+    available: (amount: string) => `${amount} you can use`,
+    cashOut: (amount: string) => `Cash out ${amount}`,
+    saveMore: (amount: string) => `Save ${amount} more`,
+    // Asked in place, on the sheet, before anything is sent.
+    askFor: (what: string) => `Ask Mom or Dad for ${what}?`,
+    robloxOf: (amount: string) => `${amount} of Roblox`,
+    ask: 'Ask',
+    notNow: 'Not now',
+    asked: 'Asked · waiting for Mom or Dad',
+    ofWeek: (used: number, cap: number) => `${used} of ${cap} this week`,
+    // The card's toast, for four seconds after a parent says yes.
+    inPiggy: (amount: string) => `+${amount} in your piggy bank`,
+    inRoblox: (amount: string) => `+${amount} in your Roblox bank`,
+    // What a row was, when it says nothing itself.
+    cashedOut: 'cashed out',
+    used: 'used',
+    nothingYet: 'Nothing in here yet.',
+    notYet: 'That did not go through.',
+    done: 'Done',
   },
 
   picker: {
@@ -204,9 +232,11 @@ export const copy = {
     asked: 'Asked',
     approved: 'Yes!',
     done: 'Done',
-    // A cash reward is coming once a parent says yes, and paid once handed over.
-    cashComing: (dollars: number) => `$${dollars} · coming`,
-    cashPaid: (dollars: number) => `$${dollars} · paid`,
+    // Asked again while the first is still waiting: how many are waiting.
+    askedCount: (count: number) => `Asked · ${count}`,
+    // Where a cash or Roblox reward goes, said on its tile.
+    toPiggy: (amount: string) => `${amount} → piggy bank`,
+    toRoblox: (amount: string) => `${amount} → Roblox bank`,
     declined: 'Not this time',
     comingSoon: 'Coming soon',
     // The star on a tile. Said as what it does, not as a verb: a child is
