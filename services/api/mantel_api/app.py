@@ -414,8 +414,8 @@ def create_app(
 
     @app.get("/api/version", response_model=VersionInfo)
     def state_version() -> VersionInfo:
-        """The number the screens watch. From memory: no database read."""
-        return versions.current()
+        """The number the screens watch, and the release. From memory: no database read."""
+        return versions.current().model_copy(update={"release": read_version()})
 
     @app.get("/api/events")
     async def events(request: Request) -> StreamingResponse:

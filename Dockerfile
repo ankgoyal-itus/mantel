@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # One container: the API with the kiosk built into it, exactly as `make build`
-# and the launchd agent do it on the Mac. This is also the shape Cloud Run
-# would want, if it is ever wanted; nothing here assumes a LAN.
+# and the launchd agent do it on the Mac. Production runs it on Albert (Linux,
+# Docker) from a tagged release; see docs/DEPLOY.md. Nothing here is Mac-only
+# and nothing assumes a LAN.
 
 # ---- the kiosk -------------------------------------------------------------
 # Built here rather than copied in, so the image always carries a bundle that
@@ -20,7 +21,10 @@ FROM python:3.11-slim AS api
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     MANTEL_ROOT=/app \
-    MANTEL_STATIC=/app/static
+    MANTEL_STATIC=/app/static \
+    MANTEL_HOME=/app/home \
+    MANTEL_BIND=0.0.0.0 \
+    MANTEL_PORT=8000
 
 WORKDIR /app
 
@@ -39,6 +43,6 @@ USER mantel
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD ["python", "-c", "import urllib.request as r; r.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+  CMD ["python", "-c", "import os, urllib.request as r; r.urlopen('http://127.0.0.1:%s/api/health' % os.environ.get('MANTEL_PORT', '8000'), timeout=3)"]
 
 CMD ["python", "-m", "mantel_api"]

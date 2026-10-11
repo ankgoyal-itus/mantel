@@ -154,3 +154,6 @@ Format: one bullet per idea, newest at the bottom, with the date it was parked.
 - 2026-10-10 — The published pictures in screenshots/ predate the bank (the
   rewards one still says the Roblox rows are off). `make screenshots` redraws
   them.
+- 2026-10-10 — Albert's compose pulls the tag and builds on the server. A
+  registry (for example GitHub's, private) would let Albert pull an image built
+  once, and roll back by tag without rebuilding.

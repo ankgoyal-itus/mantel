@@ -17,7 +17,12 @@ REPO=$(cd "$(dirname "$0")/.." && pwd)
 # another name, put MANTEL_ALBUM=<its name> in .env.
 ALBUM=${MANTEL_ALBUM:-$(sed -n 's/^MANTEL_ALBUM=//p' "$REPO/.env" 2>/dev/null | tr -d '\r' | head -1)}
 ALBUM=${ALBUM:-Mantel}
-API=${MANTEL_API:-http://127.0.0.1:8000}
+# Where the photos go: MANTEL_PHOTOS_URL from the environment, then .env, then
+# MANTEL_API (its old name), then this Mac's own Mantel on :8000 (the default).
+setting() { sed -n "s/^$1=//p" "$REPO/.env" 2>/dev/null | tr -d '\r' | head -1; }
+API=${MANTEL_PHOTOS_URL:-$(setting MANTEL_PHOTOS_URL)}
+API=${API:-${MANTEL_API:-http://127.0.0.1:8000}}
+API=${API%/}
 INBOX="$REPO/inbox"
 SENT="$INBOX/sent"
 
@@ -41,8 +46,8 @@ if [ -z "${TOKEN:-}" ]; then
 fi
 
 if ! curl -fsS -o /dev/null --max-time 5 "$API/api/health"; then
-  say "The API is not answering on $API. Is the service running?" >&2
-  say "  launchctl print gui/\$(id -u)/com.mantel.api | head" >&2
+  say "Nothing answers on $API (MANTEL_PHOTOS_URL). Nothing was sent; the album and" >&2
+  say "inbox/ are untouched, so the next run picks everything up." >&2
   exit 1
 fi
 

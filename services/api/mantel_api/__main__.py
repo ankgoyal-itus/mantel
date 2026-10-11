@@ -12,6 +12,17 @@ from dotenv import load_dotenv
 
 from .paths import repo_root
 
+DEFAULT_BIND = "0.0.0.0"  # noqa: S104 — the iPads reach it over the LAN
+DEFAULT_PORT = 8000
+
+
+def listen_address() -> tuple[str, int]:
+    """MANTEL_BIND and MANTEL_PORT (environment or .env), else every interface on :8000.
+    The Docker image sets both; compose maps the host side from its own environment."""
+    host = os.environ.get("MANTEL_BIND", "").strip() or DEFAULT_BIND
+    port = os.environ.get("MANTEL_PORT", "").strip()
+    return host, int(port) if port else DEFAULT_PORT
+
 
 def main() -> None:
     # Without this the root logger only shows WARNING and above, which hides
@@ -40,10 +51,11 @@ def main() -> None:
 
     # log_config=None leaves logging to the config above; uvicorn's own dictConfig
     # would otherwise install timestamp-free handlers for its access lines.
+    host, port = listen_address()
     uvicorn.run(
         "mantel_api.app:app",
-        host="0.0.0.0",  # noqa: S104
-        port=8000,
+        host=host,
+        port=port,
         log_config=None,
         reload=reloading,
         # The /api/events streams would otherwise hold a stop open until the

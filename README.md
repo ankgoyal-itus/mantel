@@ -192,14 +192,14 @@ an amber "updated" chip overnight, that is the first thing to check.
     make down
 
 `Dockerfile` builds the kiosk with Node and runs the API on `python:3.11-slim`
-as a non-root user. `docker-compose.yml` mounts `home/`, so a
-changed meal needs no rebuild, and reads `.env` if it is there. Same port, same
-app: the iPads cannot tell which way it is running.
+as a non-root user. `docker-compose.yml` mounts the data folder, so a changed
+meal needs no rebuild, and reads `.env` if it is there. The host address, port
+and data folder come from the environment (`MANTEL_BIND`, `MANTEL_PORT`,
+`MANTEL_HOME`). Same app: the iPads cannot tell which way it is running.
 
-This is also the shape Cloud Run would want, if Mantel ever has to live outside
-the house — the image assumes no LAN. Cloud Run is **not** set up and should
-not be, until someone decides what happens to the calendar secrets and the
-photos. Parked in `docs/later.md`.
+**Production is Albert**, the house's Linux server, which runs this container
+from a tagged release: **docs/DEPLOY.md** has the settings, the data folder,
+the health address and how to upgrade. Docker is not installed on Jarvis.
 
 ## On the home network
 
@@ -227,7 +227,8 @@ never have to hold an address at all:
     dscacheutil -flushcache
 
 Mantel is then at **http://jarvis.local:8000** — the URL to put on the iPads.
-(Camwall shares the name on :8001. The old `mantel.local` is no longer used.)
+(Sentinel shares the name on :8001. Once Mantel runs on Albert, the iPads use
+**http://albert.local:8000** instead; see docs/DEPLOY.md.)
 Bonjour only works within one network, so keep the iPads and the Mac on the
 same Wi-Fi (not a guest network, not a separate IoT SSID). If `jarvis.local`
 ever stops resolving, the reserved IP still works: `http://192.168.1.x:8000`.

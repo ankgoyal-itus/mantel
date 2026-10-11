@@ -1158,10 +1158,12 @@ class SavingFor(BaseModel):
 
 
 class VersionInfo(BaseModel):
-    """What the screens show, as one number that only goes up."""
+    """What the screens show, as one number that only goes up, and which release is
+    answering (the VERSION file; the tag a deploy pulled)."""
 
     version: int
     changed_at: str | None = None
+    release: str | None = None
 
 
 BankAccount = Literal["cash", "roblox"]

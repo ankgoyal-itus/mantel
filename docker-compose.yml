@@ -1,22 +1,35 @@
-# `make up` / `make down`. The image carries the API and the built kiosk;
-# the family's home/ (content, ledger, photos, caches) and the secrets stay
-# outside it.
+# `make up` / `make down`, and production on Albert (docs/DEPLOY.md). The image
+# carries the API and the built kiosk; the family's home/ (content, ledger,
+# photos, caches) and the secrets stay outside it.
+#
+# Read from the environment (or a .env next to this file), all optional:
+#   MANTEL_BIND   host address to publish on   (default 0.0.0.0: the LAN)
+#   MANTEL_PORT   host port                    (default 8000)
+#   MANTEL_HOME   host data folder, absolute or ./-relative (default ./home)
+#   MANTEL_UID / MANTEL_GID  who the container runs as (default 10001, the
+#                 image's own non-root user); must own MANTEL_HOME
+# Inside the container the app always listens on 0.0.0.0:8000 and keeps its data
+# in /app/home.
 services:
   mantel:
     build: .
-    image: mantel:latest
+    image: mantel:${MANTEL_IMAGE_TAG:-latest}
     container_name: mantel
+    user: "${MANTEL_UID:-10001}:${MANTEL_GID:-10001}"
     ports:
-      - "8000:8000"
+      - "${MANTEL_BIND:-0.0.0.0}:${MANTEL_PORT:-8000}:8000"
     volumes:
       # The API writes here: the ledger, its backups, photos and caches.
-      - ./home:/app/home
+      - "${MANTEL_HOME:-./home}:/app/home"
     env_file:
       - path: .env
         required: false
     environment:
+      # Fixed inside the container, whatever .env says for the Mac.
       MANTEL_HOME: /app/home
+      MANTEL_BIND: 0.0.0.0
+      MANTEL_PORT: "8000"
       # Bind mounts do not deliver file-change events on macOS or Windows, so
-      # the content watcher polls instead of missing every edit.
-      WATCHFILES_FORCE_POLLING: "1"
+      # the content watcher polls there. On Linux (Albert) 0 is fine.
+      WATCHFILES_FORCE_POLLING: "${WATCHFILES_FORCE_POLLING:-1}"
     restart: unless-stopped
