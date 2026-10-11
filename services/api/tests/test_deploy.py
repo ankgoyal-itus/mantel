@@ -84,3 +84,15 @@ def test_version_names_the_release_beside_the_screens_number(client: TestClient)
     body = client.get("/api/version").json()
     assert isinstance(body["version"], int)
     assert body["release"] == (REPO / "VERSION").read_text().strip()
+
+
+def test_photos_export_goes_to_memories_by_default() -> None:
+    """Not run against the default: if Albert answered, the script would export the album."""
+    script = (REPO / "deploy" / "photos-sync.sh").read_text()
+    assert "${MANTEL_API:-http://albert.local:8002}" in script
+    assert '-H "X-Memories-Token: $TOKEN"' in script
+
+
+def test_compose_mounts_the_photo_folder_read_only() -> None:
+    compose = (REPO / "docker-compose.yml").read_text()
+    assert '"${MANTEL_PHOTOS:-./home/photos}:/app/home/photos:ro"' in compose

@@ -24,7 +24,7 @@ from zoneinfo import ZoneInfo
 from mantel_api.content import Content
 from mantel_api.db import Database
 from mantel_api.demo import CODES, seed
-from mantel_api.photos import PhotoStore
+from mantel_api.photos import write_sample_album
 from mantel_api.sample import make_home, sample_photo
 
 REPO = Path(__file__).resolve().parents[1]
@@ -57,9 +57,7 @@ def main() -> int:
         with books.write() as connection:
             seed(connection, content, today, ZONE)
         books.close()
-        album = PhotoStore(home / "photos")
-        for index in range(8):
-            album.add(sample_photo(index), f"sample-{index + 1}.jpg")
+        write_sample_album(home / "photos", [sample_photo(index) for index in range(8)])
 
         environment = {
             key: value for key, value in os.environ.items() if not key.startswith("MANTEL_CAL_")

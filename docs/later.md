@@ -157,3 +157,6 @@ Format: one bullet per idea, newest at the bottom, with the date it was parked.
 - 2026-10-10 — Albert's compose pulls the tag and builds on the server. A
   registry (for example GitHub's, private) would let Albert pull an image built
   once, and roll back by tag without rebuilding.
+- 2026-10-10 — Parent mode's Photos section still offers Delete, which now gets
+  Memories' 410 message. Either hide it and link to Memories, or let parent
+  mode delete through Memories (it would need Memories to trust Mantel's sign-in).

@@ -437,51 +437,30 @@ address in Google Calendar to invalidate it, then paste the new one here.
 
 ## Photos
 
-The frame shows whatever has been uploaded. The usual way is `make photos`,
-which takes the **Mantel** album out of Photos on this Mac and sends it, and
-which the `com.mantel.photos` agent runs nightly at 21:00. An iOS Shortcut can
-push one up from a phone as well. **[docs/photos.md](docs/photos.md)** sets up
-both, and covers the upload token.
+**Since 0.3.0 the photos belong to Memories**, the photo frame app on :8002
+(`ankgoyal-itus/memories`, beside this repo). Memories takes the uploads, runs
+the pipeline (upright, 2048px JPEG, metadata stripped, the town's name from a
+GPS fix), keeps the store and deletes. Mantel reads the same folder, read-only,
+so its iPads' frame shows exactly what it did:
 
-A Photos export, or any other folder, can also go in directly — though the
-running service only notices when it re-reads the catalogue, so prefer
-`make photos` while it is up:
+    GET    /api/photos            the list, newest first (unchanged)
+    GET    /api/photos/{id}.jpg   the file, cached for a year (unchanged)
+    POST   /api/photos            410 Gone: {"detail": ..., "moved_to": "<Memories>/api/photos"}
+    DELETE /api/photos/{id}       410 Gone, the same
 
-    services/api/.venv/bin/python -m mantel_api.photos import ~/Pictures/export
+The folder is `MANTEL_PHOTOS_DIR`, else `home/photos/`; on Albert it is
+Memories' photo folder mounted read-only (`MANTEL_PHOTOS` in compose;
+docs/DEPLOY.md). Memories' address for the 410 is `MANTEL_MEMORIES_URL`,
+default `http://albert.local:8002`. A catalogue that will not parse is logged
+and the last good list keeps serving; Mantel never writes to the folder.
 
-Everything lives under `home/photos/`, which is git-ignored in full:
-
-    originals/   exactly what was uploaded, untouched
-    cache/       what the iPad is served: 2048px JPEG, no metadata
-    failed/      anything that could not be read, kept for a human
-    index.json   the catalogue, rewritten atomically on every change
-
-On the way in each photo is rotated upright from its EXIF orientation, resized
-so the long edge is 2048 pixels (never enlarged), re-encoded as JPEG at quality
-85, and stripped of every piece of metadata except the date it was taken. The
-id is the first 16 hex of the SHA-256 of the original, so sending the same
-photo twice is recognised and skipped rather than stored twice.
-
-A file Pillow cannot read is moved to `failed/`, logged with its name and the
-reason, and left out of the list. One bad photo never fails a batch and never
-reaches the iPad.
-
-    GET    /api/photos            the list, newest first
-    GET    /api/photos/{id}.jpg   the file, cached for a year
-    POST   /api/photos            multipart upload, one or many, 30 MB each
-    DELETE /api/photos/{id}       remove one
-
-The two writing endpoints need the header `X-Mantel-Token`, matching
-`MANTEL_UPLOAD_TOKEN` in `.env` — `openssl rand -hex 16` makes a value, and
-the API reads it at startup, so a change needs a restart
-(`launchctl kickstart -k gui/$(id -u)/com.mantel.api`). Section 0 of
-[docs/photos.md](docs/photos.md) walks through it. **With that variable unset, uploads are refused
-with 503 rather than accepting anything** — an empty token must never mean an
-open door on the LAN. Reading needs no token: the iPads are on the same network
-and the photos are already on their screen.
-
-HEIC straight off an iPhone is converted on arrival, so nothing on the iPad
-has to understand it.
+`make photos` (and the `com.mantel.photos` agent, nightly at 21:00) still takes
+the **Mantel** album out of Photos on this Mac, but sends it to Memories:
+`MANTEL_PHOTOS_URL`, default `http://albert.local:8002`, with the header
+`X-Memories-Token` and the token `MEMORIES_UPLOAD_TOKEN` (else
+`MANTEL_UPLOAD_TOKEN`) from `.env`. If nothing answers there, it stops before
+sending anything and the album waits for the next night.
+**[docs/photos.md](docs/photos.md)** sets up the Mac and the phone Shortcut.
 
 ## Calendars, holidays and school days
 
@@ -617,20 +596,9 @@ in `docs/later.md` — its source would have to be offered to those users.
 
 ## Where a photo was taken
 
-The frame captions a photo "Lake Tahoe · June 2024" when it carries a GPS fix.
-Nothing is looked up: `mantel_api/data/cities.tsv` is every city on Earth over
-fifteen thousand people — 34,167 of them, 861KB, as name, latitude, longitude
-and country — and the nearest one within 30km is the answer. Past 30km there
-is no place at all, because a photo taken in the Sierra captioned with a town
-sixty kilometres away is not a vaguer answer, it is a wrong one.
-
-The coordinates are read out of EXIF and thrown away. What is stored is the
-name of a town, which is the part worth putting on a wall and the part that
-cannot be used to find a house. Re-encoding strips the rest.
-
-**Places data: [GeoNames](https://www.geonames.org/), CC BY 4.0.** Regenerate
-it from `cities5000.zip` on their export page, keeping rows with population
-≥ 15000 as `name<TAB>lat<TAB>lon<TAB>country`, sorted by latitude.
+The "Lake Tahoe · June 2024" caption's place is resolved by Memories at import,
+from its bundled GeoNames gazetteer (CC BY 4.0; attribution in Memories'
+README). Mantel only shows the `place` that is already in the catalogue.
 
 ## The design language
 

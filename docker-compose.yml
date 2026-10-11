@@ -6,6 +6,8 @@
 #   MANTEL_BIND   host address to publish on   (default 0.0.0.0: the LAN)
 #   MANTEL_PORT   host port                    (default 8000)
 #   MANTEL_HOME   host data folder, absolute or ./-relative (default ./home)
+#   MANTEL_PHOTOS host photo folder, mounted read-only (default ./home/photos); on
+#                 Albert, Memories' photos folder
 #   MANTEL_UID / MANTEL_GID  who the container runs as (default 10001, the
 #                 image's own non-root user); must own MANTEL_HOME
 # Inside the container the app always listens on 0.0.0.0:8000 and keeps its data
@@ -19,8 +21,11 @@ services:
     ports:
       - "${MANTEL_BIND:-0.0.0.0}:${MANTEL_PORT:-8000}:8000"
     volumes:
-      # The API writes here: the ledger, its backups, photos and caches.
+      # The API writes here: the ledger, its backups and caches.
       - "${MANTEL_HOME:-./home}:/app/home"
+      # The photos belong to Memories (0.3.0): its folder, read-only. On Albert set
+      # MANTEL_PHOTOS to Memories' data folder + /photos (docs/DEPLOY.md).
+      - "${MANTEL_PHOTOS:-./home/photos}:/app/home/photos:ro"
     env_file:
       - path: .env
         required: false

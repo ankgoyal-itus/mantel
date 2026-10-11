@@ -67,8 +67,10 @@ def backup_dir() -> Path:
 
 
 def photos_dir() -> Path:
-    """Uploads, their resized copies and the catalogue."""
-    return home_dir() / "photos"
+    """The photo store, read-only: MANTEL_PHOTOS_DIR, else home/photos. Since 0.3.0 it belongs
+    to Memories; on Albert it is Memories' folder, mounted read-only."""
+    override = os.environ.get("MANTEL_PHOTOS_DIR")
+    return Path(override).expanduser().resolve() if override else home_dir() / "photos"
 
 
 def static_dir() -> Path:

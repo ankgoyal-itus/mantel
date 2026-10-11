@@ -5,8 +5,8 @@
 #   1. the "Mantel" album in Photos, exported through AppleScript
 #   2. anything dropped in inbox/, which needs no permissions at all
 #
-# Both are handed to the running API over the loopback rather than to
-# `python -m mantel_api.photos`, so the service's own catalogue updates without
+# Both are uploaded to Memories (the photo frame app, which owns the photos
+# since Mantel 0.3.0; Mantel reads the same folder), so its catalogue updates without
 # a restart. Re-sending a photo is free: the API recognises it by content and
 # skips it.
 set -eu
@@ -18,10 +18,11 @@ REPO=$(cd "$(dirname "$0")/.." && pwd)
 ALBUM=${MANTEL_ALBUM:-$(sed -n 's/^MANTEL_ALBUM=//p' "$REPO/.env" 2>/dev/null | tr -d '\r' | head -1)}
 ALBUM=${ALBUM:-Mantel}
 # Where the photos go: MANTEL_PHOTOS_URL from the environment, then .env, then
-# MANTEL_API (its old name), then this Mac's own Mantel on :8000 (the default).
+# MANTEL_API (its old name), then Memories on Albert (the default since 0.3.0:
+# Memories owns the photos; Mantel only reads them).
 setting() { sed -n "s/^$1=//p" "$REPO/.env" 2>/dev/null | tr -d '\r' | head -1; }
 API=${MANTEL_PHOTOS_URL:-$(setting MANTEL_PHOTOS_URL)}
-API=${API:-${MANTEL_API:-http://127.0.0.1:8000}}
+API=${API:-${MANTEL_API:-http://albert.local:8002}}
 API=${API%/}
 INBOX="$REPO/inbox"
 SENT="$INBOX/sent"
@@ -39,9 +40,12 @@ is_image() {
   esac
 }
 
-TOKEN=$(sed -n 's/^MANTEL_UPLOAD_TOKEN=//p' "$REPO/.env" 2>/dev/null | tr -d '\r' | head -1)
+# Memories' upload token: MEMORIES_UPLOAD_TOKEN, else MANTEL_UPLOAD_TOKEN (the
+# same value Memories is given; see Memories' docs/DEPLOY.md).
+TOKEN=$(setting MEMORIES_UPLOAD_TOKEN)
+TOKEN=${TOKEN:-$(setting MANTEL_UPLOAD_TOKEN)}
 if [ -z "${TOKEN:-}" ]; then
-  say "No MANTEL_UPLOAD_TOKEN in $REPO/.env — see docs/photos.md, section 0." >&2
+  say "No MEMORIES_UPLOAD_TOKEN or MANTEL_UPLOAD_TOKEN in $REPO/.env — see docs/photos.md, section 0." >&2
   exit 1
 fi
 
@@ -108,7 +112,7 @@ for file in "$STAGE"/*; do
     continue
   fi
   if curl -fsS -X POST "$API/api/photos" \
-    -H "X-Mantel-Token: $TOKEN" \
+    -H "X-Memories-Token: $TOKEN" \
     -F "file=@$file" >>"$RESPONSES" 2>/dev/null; then
     printf '\n' >>"$RESPONSES"
     SENT_COUNT=$((SENT_COUNT + 1))

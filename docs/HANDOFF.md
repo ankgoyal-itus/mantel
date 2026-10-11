@@ -10,3 +10,11 @@ docs/later.md and docs/DEPLOY.md too.
   Photos export stays on Jarvis and uploads to `MANTEL_PHOTOS_URL` (default
   this Mac's Mantel, as before). docs/DEPLOY.md written. Mantel still runs on
   Jarvis as `com.mantel.api` until the user moves it (DEPLOY.md, "First move").
+- **2026-10-10 (J3, v0.3.0):** the photo pipeline moved to Memories (new repo,
+  :8002): the store, the import, uploads and deletes. Mantel reads the folder
+  read-only (`MANTEL_PHOTOS_DIR`; compose `MANTEL_PHOTOS`, mounted `:ro`) and
+  keeps `GET /api/photos` and the files; `POST`/`DELETE` answer 410 with
+  `MANTEL_MEMORIES_URL` (default http://albert.local:8002). The nightly export
+  now defaults to Memories on Albert with `X-Memories-Token`; until Memories runs
+  there it stops cleanly every night. The gazetteer (places.py, cities.tsv) went
+  with the pipeline. Parent mode's photo delete now shows the 410's message.

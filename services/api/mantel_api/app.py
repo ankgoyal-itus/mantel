@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import secrets
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -18,15 +17,12 @@ import yaml
 from fastapi import (
     Depends,
     FastAPI,
-    File,
-    Header,
     HTTPException,
     Query,
     Request,
     Response,
-    UploadFile,
 )
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
@@ -147,7 +143,7 @@ from .parent import (
     ParentAuth,
 )
 from .paths import read_version
-from .photos import MAX_BYTES, PhotoError, PhotoStore
+from .photos import PhotoStore
 from .school import SchoolService
 from .school_events import SchoolEvents, Series, group
 from .streaks import current_streak
@@ -164,39 +160,25 @@ MAX_MEALS_DAYS = 14
 
 #: A hashed filename never changes what it points at, so it is cached for good.
 PHOTO_CACHE = "public, max-age=31536000, immutable"
-UPLOAD_CHUNK = 1 << 20
 
 
-def check_upload_token(supplied: str | None) -> None:
-    """X-Mantel-Token against MANTEL_UPLOAD_TOKEN, read per request so a restart
-    is the only thing a changed .env needs.
-
-    An unset token disables writing altogether rather than matching the empty
-    string, which would leave the upload endpoint open to the whole LAN.
-    """
-    expected = os.environ.get("MANTEL_UPLOAD_TOKEN", "").strip()
-    if not expected:
-        raise HTTPException(status_code=503, detail="uploads are not configured")
-    if not supplied or not secrets.compare_digest(supplied, expected):
-        raise HTTPException(status_code=401, detail="bad upload token")
+def memories_url() -> str:
+    """Where photos are uploaded and deleted since 0.3.0: MANTEL_MEMORIES_URL, else
+    Memories on Albert. Read per request, so a changed .env needs only a restart."""
+    configured = os.environ.get("MANTEL_MEMORIES_URL", "").strip()
+    return (configured or "http://albert.local:8002").rstrip("/")
 
 
-async def read_capped(upload: UploadFile) -> bytes:
-    """Read one upload, refusing anything over MAX_BYTES before it is stored."""
-    chunks: list[bytes] = []
-    total = 0
-    while True:
-        chunk = await upload.read(UPLOAD_CHUNK)
-        if not chunk:
-            break
-        total += len(chunk)
-        if total > MAX_BYTES:
-            megabytes = MAX_BYTES // (1024 * 1024)
-            raise HTTPException(
-                status_code=413, detail=f"{upload.filename} is larger than {megabytes} MB"
-            )
-        chunks.append(chunk)
-    return b"".join(chunks)
+def photos_moved() -> JSONResponse:
+    """410 Gone for the old upload and delete routes, with the new address."""
+    target = memories_url()
+    return JSONResponse(
+        status_code=410,
+        content={
+            "detail": f"Photos are managed in Memories now: {target}",
+            "moved_to": f"{target}/api/photos",
+        },
+    )
 
 
 def _zone(name: str) -> ZoneInfo:
@@ -659,43 +641,16 @@ def create_app(
             raise HTTPException(status_code=404, detail="no such photo")
         return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": PHOTO_CACHE})
 
-    @app.post("/api/photos")
-    async def photo_upload(
-        file: Annotated[list[UploadFile], File()],
-        x_mantel_token: Annotated[str | None, Header()] = None,
-    ) -> dict[str, list[str]]:
-        """One or many files from the Shortcut. A repeat is skipped, not an error."""
-        check_upload_token(x_mantel_token)
-        added: list[str] = []
-        skipped: list[str] = []
-        for upload in file:
-            data = await read_capped(upload)
-            try:
-                # Pillow is slow enough to matter: 50 photos would otherwise
-                # hold the event loop, and with it every kiosk poll.
-                photo_id, was_added = await run_in_threadpool(
-                    album.add, data, upload.filename or "upload.jpg"
-                )
-            except PhotoError as exc:
-                # Already in failed/ and logged. The rest of the batch goes on.
-                logger.error("upload %s rejected: %s", upload.filename, exc)
-                continue
-            (added if was_added else skipped).append(photo_id)
-        return {"added": added, "skipped": skipped}
+    # Uploads and deletes moved to Memories (0.3.0). Mantel only reads the photo
+    # folder; the old routes say where to go instead, so a stale Shortcut or export
+    # fails loudly rather than quietly.
+    @app.post("/api/photos", status_code=410)
+    def photo_upload() -> JSONResponse:
+        return photos_moved()
 
-    @app.delete("/api/photos/{photo_id}")
-    def photo_delete(
-        photo_id: str,
-        request: Request,
-        x_mantel_token: Annotated[str | None, Header()] = None,
-    ) -> dict[str, str]:
-        # A signed-in parent may delete from the iPad; everyone else needs the
-        # upload token, which the kiosk deliberately does not have.
-        if not auth.valid(request.cookies.get(COOKIE_NAME), time.time()):
-            check_upload_token(x_mantel_token)
-        if not album.delete(photo_id):
-            raise HTTPException(status_code=404, detail="no such photo")
-        return {"deleted": photo_id}
+    @app.delete("/api/photos/{photo_id}", status_code=410)
+    def photo_delete(photo_id: str) -> JSONResponse:
+        return photos_moved()
 
     # ---- parent mode -------------------------------------------------------
 

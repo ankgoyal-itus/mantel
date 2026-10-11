@@ -1,5 +1,12 @@
 # Photos
 
+> **Since Mantel 0.3.0, uploads go to Memories** (the photo frame app, :8002),
+> which owns the photos; Mantel reads the same folder. Everything below works
+> the same with Memories' address, `http://albert.local:8002/api/photos`
+> (Mantel's old address answers 410 with it). The header can stay
+> `X-Mantel-Token` or become `X-Memories-Token`; the token is the same value,
+> set in Memories as `MEMORIES_UPLOAD_TOKEN` (see Memories' docs/DEPLOY.md).
+
 How photos get onto the frame. Two ways, and the first one is much less work:
 
 1. **From this Mac** — a script reads the "Mantel" album in Photos and uploads
@@ -56,7 +63,7 @@ already — use it, and skip the rest of this section.
 
         cd <repo>
         TOKEN=$(grep '^MANTEL_UPLOAD_TOKEN=' .env | cut -d= -f2)
-        curl -s -X POST http://jarvis.local:8000/api/photos \
+        curl -s -X POST http://albert.local:8002/api/photos \
           -H "X-Mantel-Token: $TOKEN" -F "file=@some-photo.jpg"
 
    `{"added":["..."]}` means it works. `503` means the restart has not
@@ -178,7 +185,7 @@ actions in order.
 5. **Get Contents of URL** — this is the action that does the work, and the
    only fiddly one. It shows a single URL field until you open it up:
 
-   1. Put the address in the URL field: `http://jarvis.local:8000/api/photos`
+   1. Put the address in the URL field: `http://albert.local:8002/api/photos`
    2. Tap the **⌄ chevron** at the right of the action — older iOS labels it
       **Show More**. It unfolds to reveal Method, Headers and Request Body.
    3. **Method** → **POST**. Headers and Request Body do nothing until it is
@@ -228,7 +235,7 @@ before touching the phone. On the Mac:
 
     cd <repo>
     TOKEN=$(grep '^MANTEL_UPLOAD_TOKEN=' .env | cut -d= -f2)
-    curl -s -X POST http://jarvis.local:8000/api/photos \
+    curl -s -X POST http://albert.local:8002/api/photos \
       -H "X-Mantel-Token: $TOKEN" \
       -F "file=@some-photo.jpg"
 
@@ -236,7 +243,7 @@ before touching the phone. On the Mac:
 failing afterwards is in the Shortcut. `{"detail":"bad upload token"}` means
 the token itself is wrong. To take that test photo off again:
 
-    curl -s -X DELETE http://jarvis.local:8000/api/photos/<the id> \
+    curl -s -X DELETE http://albert.local:8002/api/photos/<the id> \
       -H "X-Mantel-Token: $TOKEN"
 
 ### 4. Run it

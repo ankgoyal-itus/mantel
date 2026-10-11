@@ -14,8 +14,8 @@ dependencies = [
   "recurring-ical-events>=3.3",
   "python-dotenv>=1.0",
   "python-multipart>=0.0.9",
+  # The demo's and the design suite's placeholder photos (sample.py).
   "pillow>=10.4",
-  "pillow-heif>=0.18",
   # The Swiss Ephemeris, used with its built-in Moshier model so there are no
   # data files. AGPL-3.0; see the README's licence note.
   "pyswisseph>=2.10",
