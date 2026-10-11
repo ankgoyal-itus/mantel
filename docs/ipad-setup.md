@@ -11,9 +11,9 @@ setup.
 
 ## Before you start
 
-- Mantel is running on the Mac and answers at **http://mantel.local:8000** from
+- Mantel is running on the Mac and answers at **http://jarvis.local:8000** from
   another device on the house Wi-Fi. (On the Mac: `make install-service`. See
-  the README if `mantel.local` does not resolve.)
+  the README if `jarvis.local` does not resolve.)
 - The Mac is set not to sleep. A sleeping Mac is a blank iPad.
 - You know the Wi-Fi password.
 - You have chosen a **Guided Access passcode** and written it down somewhere
@@ -90,7 +90,7 @@ leaving Mantel.
 
 ## 6. Add Mantel to the home screen
 
-22. Open **Safari** and go to **http://mantel.local:8000**. The dashboard
+22. Open **Safari** and go to **http://jarvis.local:8000**. The dashboard
     should appear. If it does not, see the troubleshooting table below before
     going on.
 23. Tap the **Share** button (the square with the arrow), then **Add to Home

@@ -218,17 +218,18 @@ address reservations — and tie that IP to the Mac's Wi-Fi hardware address
 picks up a different IP after some future power cut, and both iPads go blank
 with no explanation.
 
-**3. Name the Mac `mantel`.** Bonjour then advertises it by name, so the iPads
+**3. Name the Mac `jarvis`.** Bonjour then advertises it by name, so the iPads
 never have to hold an address at all:
 
-    sudo scutil --set HostName mantel
-    sudo scutil --set LocalHostName mantel
-    sudo scutil --set ComputerName mantel
+    sudo scutil --set HostName jarvis
+    sudo scutil --set LocalHostName jarvis
+    sudo scutil --set ComputerName jarvis
     dscacheutil -flushcache
 
-Mantel is then at **http://mantel.local:8000** — the URL to put on the iPads.
+Mantel is then at **http://jarvis.local:8000** — the URL to put on the iPads.
+(Camwall shares the name on :8001. The old `mantel.local` is no longer used.)
 Bonjour only works within one network, so keep the iPads and the Mac on the
-same Wi-Fi (not a guest network, not a separate IoT SSID). If `mantel.local`
+same Wi-Fi (not a guest network, not a separate IoT SSID). If `jarvis.local`
 ever stops resolving, the reserved IP still works: `http://192.168.1.x:8000`.
 That is what the reservation is for.
 

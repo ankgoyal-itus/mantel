@@ -56,7 +56,7 @@ already — use it, and skip the rest of this section.
 
         cd <repo>
         TOKEN=$(grep '^MANTEL_UPLOAD_TOKEN=' .env | cut -d= -f2)
-        curl -s -X POST http://mantel.local:8000/api/photos \
+        curl -s -X POST http://jarvis.local:8000/api/photos \
           -H "X-Mantel-Token: $TOKEN" -F "file=@some-photo.jpg"
 
    `{"added":["..."]}` means it works. `503` means the restart has not
@@ -178,7 +178,7 @@ actions in order.
 5. **Get Contents of URL** — this is the action that does the work, and the
    only fiddly one. It shows a single URL field until you open it up:
 
-   1. Put the address in the URL field: `http://mantel.local:8000/api/photos`
+   1. Put the address in the URL field: `http://jarvis.local:8000/api/photos`
    2. Tap the **⌄ chevron** at the right of the action — older iOS labels it
       **Show More**. It unfolds to reveal Method, Headers and Request Body.
    3. **Method** → **POST**. Headers and Request Body do nothing until it is
@@ -228,7 +228,7 @@ before touching the phone. On the Mac:
 
     cd <repo>
     TOKEN=$(grep '^MANTEL_UPLOAD_TOKEN=' .env | cut -d= -f2)
-    curl -s -X POST http://mantel.local:8000/api/photos \
+    curl -s -X POST http://jarvis.local:8000/api/photos \
       -H "X-Mantel-Token: $TOKEN" \
       -F "file=@some-photo.jpg"
 
@@ -236,13 +236,13 @@ before touching the phone. On the Mac:
 failing afterwards is in the Shortcut. `{"detail":"bad upload token"}` means
 the token itself is wrong. To take that test photo off again:
 
-    curl -s -X DELETE http://mantel.local:8000/api/photos/<the id> \
+    curl -s -X DELETE http://jarvis.local:8000/api/photos/<the id> \
       -H "X-Mantel-Token: $TOKEN"
 
 ### 4. Run it
 
 11. Tap the shortcut. The **first run** shows a prompt asking to allow it to
-    reach `mantel.local` on the local network — tap **Allow**. iOS asks once
+    reach `jarvis.local` on the local network — tap **Allow**. iOS asks once
     per app, and the Shortcut cannot work until you do.
 12. The result should read `Sent 5 new photos to Mantel`, or whatever number
     was new. Run it a second time and it should say `Sent 0`: everything is
@@ -258,7 +258,7 @@ the token itself is wrong. To take that test photo off again:
 17. Turn **Run Immediately** on (so it does not ask first) and **Notify When
     Run** off.
 18. Optionally add a **Wi-Fi** condition for the home network, so it never
-    tries over cellular where `mantel.local` does not exist. On iOS this is a
+    tries over cellular where `jarvis.local` does not exist. On iOS this is a
     separate automation trigger (**Wi-Fi → joins → your network**); a time
     automation cannot also check Wi-Fi. If you use the time trigger alone, a
     run away from home simply fails and the next one catches up.
@@ -272,7 +272,7 @@ the token itself is wrong. To take that test photo off again:
 | `401` | The token is wrong or missing | Check `X-Mantel-Token` matches `MANTEL_UPLOAD_TOKEN` in `.env`, exactly, with no stray space |
 | `503` | The API has no token configured | Set `MANTEL_UPLOAD_TOKEN` in `.env` on the Mac and restart the service |
 | `413` | One photo is over 30 MB | A still photo will not be; this is usually a video or a burst. The frame takes photos only |
-| Cannot connect / times out | `mantel.local` did not resolve, or the Mac is asleep | Try the LAN IP instead. If that works, see the README's network section. If neither does, the Mac is asleep — the README's energy settings |
+| Cannot connect / times out | `jarvis.local` did not resolve, or the Mac is asleep | Try the LAN IP instead. If that works, see the README's network section. If neither does, the Mac is asleep — the README's energy settings |
 | Runs, says `Sent 0`, every time | Everything in the album has already been sent | That is correct. Add new photos to the **Mantel** album |
 | Nothing new on the iPad after 5 minutes | The kiosk has not re-polled yet, or is not in the frame | Wait one `refresh_minutes`, then triple-tap the top-left corner and check `/api/health` on the diagnostics screen |
 
