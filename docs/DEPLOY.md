@@ -123,6 +123,7 @@ The Photos library is on the Mac, so `deploy/photos-sync.sh` (launchd
 `MANTEL_PHOTOS_URL` (environment, then Jarvis's `.env`), default **Memories on
 Albert, `http://albert.local:8002`**, with the header `X-Memories-Token` and the
 token `MEMORIES_UPLOAD_TOKEN`, else `MANTEL_UPLOAD_TOKEN`, from Jarvis's `.env`
-(Memories must hold the same value). If nothing answers there, the export stops
+(Memories must hold the same value). The header goes to curl on stdin, so the
+token never shows in the process list. If nothing answers there, the export stops
 before sending anything and leaves the album and `inbox/` as they were, so the
 next night picks everything up.

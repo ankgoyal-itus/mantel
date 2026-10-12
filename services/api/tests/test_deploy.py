@@ -90,7 +90,64 @@ def test_photos_export_goes_to_memories_by_default() -> None:
     """Not run against the default: if Albert answered, the script would export the album."""
     script = (REPO / "deploy" / "photos-sync.sh").read_text()
     assert "${MANTEL_API:-http://albert.local:8002}" in script
-    assert '-H "X-Memories-Token: $TOKEN"' in script
+    assert "printf 'X-Memories-Token: %s\\n' \"$TOKEN\" | curl" in script
+    assert "-H @-" in script
+
+
+FAKE_CURL = """#!/bin/sh
+# Records every call's arguments; reads the header only when told it is on stdin.
+n=$(ls "$CALLS" | wc -l | tr -d ' ')
+printf '%s\\n' "$@" >"$CALLS/argv-$n"
+for arg in "$@"; do
+  if [ "$arg" = "@-" ]; then cat >"$CALLS/stdin-$n"; fi
+done
+case "$*" in
+  *api/photos*) printf '{"added": ["p1"], "skipped": []}' ;;
+esac
+exit 0
+"""
+
+
+def test_photos_export_keeps_the_token_out_of_every_command_line(tmp_path: Path) -> None:
+    """The process list shows argv to anyone on the Mac: the token travels on stdin only."""
+    repo = tmp_path / "repo"
+    (repo / "deploy").mkdir(parents=True)
+    shutil.copy(REPO / "deploy" / "photos-sync.sh", repo / "deploy" / "photos-sync.sh")
+    (repo / ".env").write_text("MEMORIES_UPLOAD_TOKEN=s3cret-token-value\n")
+    (repo / "inbox").mkdir()
+    (repo / "inbox" / "a.jpg").write_bytes(b"\xff\xd8\xff")
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    for name, body in (("curl", FAKE_CURL), ("osascript", "#!/bin/sh\necho 'error: no album'\n")):
+        (bin_dir / name).write_text(body)
+        (bin_dir / name).chmod(0o755)
+    calls = tmp_path / "calls"
+    calls.mkdir()
+    env = {k: v for k, v in os.environ.items() if not k.startswith("MANTEL_")}
+    done = subprocess.run(
+        ["sh", str(repo / "deploy" / "photos-sync.sh")],
+        capture_output=True,
+        text=True,
+        env={
+            **env,
+            "PATH": f"{bin_dir}:{env['PATH']}",
+            "HOME": str(tmp_path),
+            "CALLS": str(calls),
+            "MANTEL_PHOTOS_URL": "http://memories.test:8002",
+        },
+        timeout=30,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr
+    assert "uploaded: 1" in done.stdout and "new: 1" in done.stdout
+    argvs = [p.read_text() for p in sorted(calls.glob("argv-*"))]
+    stdins = [p.read_text() for p in sorted(calls.glob("stdin-*"))]
+    assert len(argvs) == 2  # the health check, then one upload
+    assert all("s3cret-token-value" not in a and "X-Memories-Token" not in a for a in argvs)
+    assert stdins == ["X-Memories-Token: s3cret-token-value\n"]
+    assert "s3cret-token-value" not in done.stdout + done.stderr
+    log = (tmp_path / "Library" / "Logs" / "mantel" / "photos.log").read_text()
+    assert "s3cret-token-value" not in log
 
 
 def test_compose_mounts_the_photo_folder_read_only() -> None:

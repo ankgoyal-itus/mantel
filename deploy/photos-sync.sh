@@ -111,8 +111,11 @@ for file in "$STAGE"/*; do
     SKIPPED_KIND=$((SKIPPED_KIND + 1))
     continue
   fi
-  if curl -fsS -X POST "$API/api/photos" \
-    -H "X-Memories-Token: $TOKEN" \
+  # The token reaches curl on stdin (-H @-), never in its arguments: the process
+  # list shows every command line to anyone on this Mac. printf is a shell
+  # builtin, so no process ever carries the token in its argv.
+  if printf 'X-Memories-Token: %s\n' "$TOKEN" | curl -fsS -X POST "$API/api/photos" \
+    -H @- \
     -F "file=@$file" >>"$RESPONSES" 2>/dev/null; then
     printf '\n' >>"$RESPONSES"
     SENT_COUNT=$((SENT_COUNT + 1))

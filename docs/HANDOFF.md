@@ -18,3 +18,11 @@ docs/later.md and docs/DEPLOY.md too.
   now defaults to Memories on Albert with `X-Memories-Token`; until Memories runs
   there it stops cleanly every night. The gazetteer (places.py, cities.tsv) went
   with the pipeline. Parent mode's photo delete now shows the 410's message.
+- **2026-10-12 (J4, no release):** the Photos export sends the upload token to
+  curl on stdin (`printf … | curl -H @-`) instead of as a `-H` argument, which
+  the process list showed to anyone on Jarvis during an upload. A test with a
+  stand-in curl checks that no command line carries the token or the header
+  name. On Jarvis, `com.mantel.api` is disabled (Mantel runs on Albert) and
+  `com.mantel.photos` gets `MANTEL_PHOTOS_URL` from its plist. The token that
+  was visible before this change should be rotated (Memories and Jarvis's `.env`).
+  The script doesn't ship in the image, so there is no release.
