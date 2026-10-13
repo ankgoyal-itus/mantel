@@ -94,7 +94,10 @@ Owner: uid 10001 (or `MANTEL_UID`): `sudo chown -R 10001:10001 /srv/mantel/home`
 
 ## First move from Jarvis
 
-Done once, by hand (Claude never connects to Albert):
+Done once, by hand. Claude may run read-only and deploy commands on Albert over
+SSH (`ankit-goyal@albert.local`, falling back to `albert.taila05594.ts.net`);
+never edit `.env` or secrets, and never print `FRIDAY_TOKEN`, `TM_PIN_HASH` or
+any other secret.
 
 1. On Jarvis: `launchctl bootout gui/$(id -u)/com.mantel.api` (stops the
    service; the iPads go blank until step 4).
