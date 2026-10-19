@@ -39,7 +39,7 @@ EXCLUDE="':!.local' ':!home' ':!LICENSE' ':!services/api/mantel_api/data/cities.
 # PUBLISHED: commits that were already on GitHub before this check was run on them (2026-10-18,
 # the owner's word, as in turing-machine). Their hits are listed but do not fail the check;
 # every other commit, and the tree, still fails on a hit. Add to it only on the owner's word.
-PUBLISHED="ab757d5599f395d88b0828c0927b16c0ecd93f8b"
+PUBLISHED="ab757d5599f395d88b0828c0927b16c0ecd93f8b 012f0f1f9eb0707041a87ca8c601a52472bfb58f"  # the second only removes the first one's line (Q-28)
 HITS=0
 ALLOWED="ankit goyal|ankitskgoyal.com"
 
