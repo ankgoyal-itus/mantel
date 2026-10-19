@@ -95,7 +95,7 @@ Owner: uid 10001 (or `MANTEL_UID`): `sudo chown -R 10001:10001 /srv/mantel/home`
 ## First move from Jarvis
 
 Done once, by hand. Claude may run read-only and deploy commands on Albert over
-SSH (`ankit-goyal@albert.local`, falling back to `albert.taila05594.ts.net`);
+SSH (the login and hosts are in Claude's local memory, not here);
 never edit `.env` or secrets, and never print `FRIDAY_TOKEN`, `TM_PIN_HASH` or
 any other secret.
 
