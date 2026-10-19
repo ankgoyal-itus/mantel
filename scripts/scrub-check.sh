@@ -36,6 +36,10 @@ grep -v '^[[:space:]]*#' "$LIST" | grep -v '^[[:space:]]*$' >"$PATTERNS"
 OLD_HALF=ally
 OLD_NAME="(^|[^A-Za-z])([tT]$OLD_HALF)"
 EXCLUDE="':!.local' ':!home' ':!LICENSE' ':!services/api/mantel_api/data/cities.tsv' ':!apps/kiosk/package-lock.json'"
+# PUBLISHED: commits that were already on GitHub before this check was run on them (2026-10-18,
+# the owner's word, as in turing-machine). Their hits are listed but do not fail the check;
+# every other commit, and the tree, still fails on a hit. Add to it only on the owner's word.
+PUBLISHED="ab757d5599f395d88b0828c0927b16c0ecd93f8b"
 HITS=0
 ALLOWED="ankit goyal|ankitskgoyal.com"
 
@@ -112,6 +116,13 @@ if [ "${1:-}" != "--tree" ]; then
         if (!hit && $0 ~ old) hit = 1
         if (hit) printf "%s %s\t%s\n", commit, file, $0
       }' "$OUT" | refilter | sort -u)
+  for full in $PUBLISHED; do
+    short=$(git rev-parse --short "$full")
+    if printf '%s\n' "$HISTORY" | grep -q "^$short "; then
+      echo "  $short (published before the check; allowed)"
+      HISTORY=$(printf '%s\n' "$HISTORY" | grep -v "^$short " || true)
+    fi
+  done
   if [ -n "$HISTORY" ]; then
     echo "$HISTORY" | head -40
     COUNT=$(printf '%s\n' "$HISTORY" | wc -l | tr -d ' ')
