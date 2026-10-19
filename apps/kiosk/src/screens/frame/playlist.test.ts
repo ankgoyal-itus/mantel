@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Photo } from '../../api/types'
-import { at, caption, newestFirst, ordered, playable, rank } from './playlist'
+import { at, caption, ordered, playable, rank, shown } from './playlist'
 
 function photo(id: string): Photo {
   return { id, url: `/api/photos/${id}.jpg`, w: 2048, h: 1536, taken_at: null }
@@ -71,47 +71,29 @@ describe('skipping and wrapping', () => {
   })
 })
 
-describe('what plays first after a wake', () => {
-  const photo = (id: string, taken: string | null): Photo => ({
-    id,
-    url: `/p/${id}.jpg`,
-    w: 2048,
-    h: 1536,
-    taken_at: taken,
+describe('a new shuffle every pass (2026-10-18)', () => {
+  const pass = (n: number) => LIBRARY.map((_, i) => shown(LIBRARY, SEED, n * LIBRARY.length + i)?.id)
+
+  it('plays every photo once per pass, and no two passes alike', () => {
+    const passes = [0, 1, 2, 3].map(pass)
+    for (const p of passes) {
+      expect(p.slice().sort()).toEqual(LIBRARY.map((one) => one.id).sort())
+    }
+    expect(new Set(passes.map((p) => p.join())).size).toBe(4)
   })
 
-  it('opens on the most recent thing the house did', () => {
-    const list = newestFirst([
-      photo('a', '2024-01-02'),
-      photo('c', '2026-08-30'),
-      photo('b', '2025-06-14'),
-    ])
-    expect(list[0].id).toBe('c')
+  it('never shows the same photo twice in a row at the turn', () => {
+    const passes = [0, 1, 2, 3, 4, 5].map(pass)
+    for (let n = 1; n < passes.length; n++) {
+      expect(passes[n][0]).not.toBe(passes[n - 1][LIBRARY.length - 1])
+    }
   })
 
-  it('keeps everything else in the order it was given', () => {
-    const list = newestFirst([
-      photo('a', '2024-01-02'),
-      photo('c', '2026-08-30'),
-      photo('b', '2025-06-14'),
-    ])
-    expect(list.map((one) => one.id)).toEqual(['c', 'a', 'b'])
-  })
-
-  it('goes by when it was taken, not when it arrived', () => {
-    // A scan of an old print is not new because it was scanned today.
-    const list = newestFirst([photo('scan', '1994-07-01'), photo('sat', '2026-09-19')])
-    expect(list[0].id).toBe('sat')
-  })
-
-  it('leaves an undated library exactly as it found it', () => {
-    const list = newestFirst([photo('a', null), photo('b', null)])
-    expect(list.map((one) => one.id)).toEqual(['a', 'b'])
-  })
-
-  it('ignores the undated ones rather than ranking them', () => {
-    const list = newestFirst([photo('a', null), photo('b', '2020-01-01')])
-    expect(list[0].id).toBe('b')
+  it('opens on no photo by rule, and survives an empty or single list', () => {
+    const firsts = new Set(Array.from({ length: 40 }, (_, s) => shown(LIBRARY, s, 0)?.id))
+    expect(firsts.size).toBeGreaterThan(2)
+    expect(shown([], SEED, 0)).toBe(null)
+    expect(shown([photo('only')], SEED, 9)?.id).toBe('only')
   })
 })
 

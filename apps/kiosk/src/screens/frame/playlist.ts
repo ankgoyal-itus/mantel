@@ -35,33 +35,35 @@ export function playable(photos: readonly Photo[], broken: ReadonlySet<string>):
   return photos.filter((photo) => !broken.has(photo.id))
 }
 
+/** Pass n's seed, from the session's: well spread, so neighbouring passes share no order. */
+export function passSeed(seed: number, pass: number): number {
+  return (Math.imul((seed ^ pass) >>> 0, 2654435761) ^ Math.imul(pass + 1, 40503)) >>> 0
+}
+
 /**
- * The one to open on, after the frame takes over.
- *
- * The most recent photo by the date it was taken, not the date it arrived:
- * somebody who has just sent five pictures from a Saturday wants to see the
- * Saturday, and a scan of an old print is not new because it was scanned
- * today. Everything after it plays in the session's own shuffled order, so
- * the frame does not become a reverse-chronological feed.
- *
- * Nothing dated at all leaves the order alone, which is what a library with
- * no EXIF gets — the frame worked that way before this existed.
+ * The photo at `cursor` (it only goes up). Each pass through the photos plays every photo
+ * once in its own shuffle (a seed per pass from the session's), so no two passes repeat; when
+ * a pass would open on the photo the last one closed with, it opens on its second instead.
+ * No photo opens the show by rule (2026-10-18: the newest-first opener is gone).
  */
-export function newestFirst(photos: readonly Photo[]): Photo[] {
-  let newest: Photo | null = null
-  for (const photo of photos) {
-    if (!photo.taken_at) {
-      continue
-    }
-    if (!newest || !newest.taken_at || photo.taken_at > newest.taken_at) {
-      newest = photo
-    }
+export function shown(photos: readonly Photo[], seed: number, cursor: number): Photo | null {
+  const count = photos.length
+  if (count === 0) {
+    return null
   }
-  if (!newest) {
-    return [...photos]
+  const pass = Math.floor(Math.max(0, cursor) / count)
+  const order = (n: number): Photo[] => {
+    const list = ordered(photos, passSeed(seed, n))
+    if (n === 0 || count < 2) {
+      return list
+    }
+    const before = ordered(photos, passSeed(seed, n - 1))
+    if (list[0].id !== before[count - 1].id) {
+      return list
+    }
+    return [list[1], list[0], ...list.slice(2)]
   }
-  const rest = photos.filter((photo) => photo.id !== newest.id)
-  return [newest, ...rest]
+  return order(pass)[at(cursor, count)]
 }
 
 /**

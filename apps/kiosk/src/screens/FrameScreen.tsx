@@ -6,7 +6,7 @@ import { clock12, monthYear } from '../format'
 import '../styles/frame.css'
 import FrameChip from './frame/FrameChip'
 import { useBrightCorner } from './frame/brightness'
-import { at, caption, newestFirst, ordered, playable } from './frame/playlist'
+import { caption, playable, shown } from './frame/playlist'
 
 /** One photo into the next: 800ms, and the caption with it. */
 const FADE_MS = 800
@@ -75,20 +75,12 @@ export default function FrameScreen({
 
   const slideMs = Math.max(1, slideSeconds || DEFAULT_SLIDE_SECONDS) * 1000
 
-  // One seed per session: the order is then a pure function of the photos, so
-  // re-fetching the list every refresh_minutes folds new photos in without
-  // reshuffling what is already playing.
+  // A random seed per session; each pass through the photos reshuffles from it
+  // (playlist.shown), so the frame never replays the same order.
   const [seed] = useState(() => Math.floor(Math.random() * 0x7fffffff))
-  // The session's shuffled order, with the newest photo lifted to the front:
-  // the first thing anybody sees after the frame takes over is whatever the
-  // house did most recently. Everything after it is the shuffle, so this does
-  // not turn into a reverse-chronological feed.
-  const list = useMemo(
-    () => newestFirst(playable(ordered(photos, seed), broken)),
-    [photos, seed, broken],
-  )
+  const list = useMemo(() => playable(photos, broken), [photos, broken])
 
-  const current = list.length > 0 ? list[at(cursor, list.length)] : null
+  const current = shown(list, seed, cursor)
   const bright = useBrightCorner(current ? current.url : null, night)
 
   const currentRef = useRef<Photo | null>(current)
@@ -124,10 +116,12 @@ export default function FrameScreen({
     if (list.length < 2) {
       return
     }
-    const next = list[at(cursor + 1, list.length)]
-    const preload = new Image()
-    preload.src = next.url
-  }, [cursor, list])
+    const next = shown(list, seed, cursor + 1)
+    if (next) {
+      const preload = new Image()
+      preload.src = next.url
+    }
+  }, [cursor, list, seed])
 
   const onError = useCallback((id: string) => {
     // One that will not load is dropped for the session rather than retried
