@@ -91,6 +91,10 @@ Owner: uid 10001 (or `MANTEL_UID`): `sudo chown -R 10001:10001 /srv/mantel/home`
 - **Rollback:** `docker compose down`, check out the previous tag, put the
   `home.before-…` copy back (the ledger may already be on the newer schema),
   `docker compose up -d --build`.
+- **0.3.1 → 0.3.2:** nothing is required. The parent session also travels in a
+  header (`X-Mantel-Parent`, from the sign-in answer): an iPad showing Mantel
+  inside Turing Machine from another address had its cookie dropped by Safari,
+  so the right PIN still shut it out of every parent route.
 
 ## First move from Jarvis
 

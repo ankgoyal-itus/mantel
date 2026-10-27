@@ -136,6 +136,7 @@ from .observances import OBSERVANCE_KINDS, by_date, by_date_counted
 from .panchang import PanchangService, Place
 from .parent import (
     COOKIE_NAME,
+    HEADER_NAME,
     SESSION_SECONDS,
     BadPin,
     LockedOut,
@@ -659,8 +660,14 @@ def create_app(
     def client_key(request: Request) -> str:
         return request.client.host if request.client else "unknown"
 
+    def session_token(request: Request) -> str | None:
+        """The parent session this request carries: the header the kiosk sends
+        (framed by Turing Machine from another address, Safari drops our
+        cookie), else the cookie a phone's browser holds."""
+        return request.headers.get(HEADER_NAME) or request.cookies.get(COOKIE_NAME)
+
     def require_parent(request: Request, response: Response) -> None:
-        token = request.cookies.get(COOKIE_NAME)
+        token = session_token(request)
         now = time.time()
         if not auth.valid(token, now):
             raise HTTPException(status_code=401, detail="parent session required")
@@ -687,7 +694,9 @@ def create_app(
         return {"kid_ids": kids, "person_ids": kids | parents}
 
     @app.post("/api/parent/session")
-    def parent_open(attempt: PinAttempt, request: Request, response: Response) -> dict[str, int]:
+    def parent_open(
+        attempt: PinAttempt, request: Request, response: Response
+    ) -> dict[str, int | str]:
         try:
             token = auth.open_session(attempt.pin, client_key(request), time.time())
         except NotConfigured:
@@ -715,7 +724,9 @@ def create_app(
             samesite="strict",
             path="/",
         )
-        return {"expires_in": SESSION_SECONDS}
+        # The token goes back in the body as well, for the kiosk to hold and send
+        # as a header: in a frame from another address the cookie never returns.
+        return {"expires_in": SESSION_SECONDS, "token": token}
 
     @app.put("/api/kids/{kid_id}/saving/{reward_id}", response_model=PointsSummary)
     def mark_saving(kid_id: str, reward_id: str) -> PointsSummary:
@@ -769,15 +780,15 @@ def create_app(
 
     @app.get("/api/parent/session")
     def parent_session(request: Request) -> dict[str, object]:
-        """Whether the cookie in hand is still good.
+        """Whether the session in hand (header or cookie) is still good.
 
         The dashboard asks before offering Approve and Decline on a row: a
         parent who signed in two minutes ago should not be made to type the
         PIN again, and one who did not should not be shown buttons that will
         fail. Unauthenticated on purpose — the answer is a boolean about a
-        cookie the asker already holds, and it says nothing about anything.
+        token the asker already holds, and it says nothing about anything.
         """
-        left = auth.remaining(request.cookies.get(COOKIE_NAME), time.time())
+        left = auth.remaining(session_token(request), time.time())
         return {"open": left > 0, "expires_in": left}
 
     @app.get(
@@ -842,7 +853,7 @@ def create_app(
 
     @app.delete("/api/parent/session")
     def parent_close(request: Request, response: Response) -> dict[str, str]:
-        auth.close_session(request.cookies.get(COOKIE_NAME))
+        auth.close_session(session_token(request))
         response.delete_cookie(COOKIE_NAME, path="/")
         return {"closed": "ok"}
 

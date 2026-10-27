@@ -1,6 +1,9 @@
 /**
- * Parent mode talks to the API with a cookie the browser holds and the kiosk
- * cannot read. The PIN itself is never stored here, only posted once.
+ * Parent mode talks to the API with a session token. The browser holds it as a
+ * cookie, and since 0.3.2 the kiosk holds it in memory too and sends it as a
+ * header: framed by Turing Machine from another address, Safari treats Mantel
+ * as a third party and drops the cookie. The PIN itself is never stored here,
+ * only posted once; the token lives until sign-out or a reload.
  */
 
 import type {
@@ -49,8 +52,25 @@ export class ApiError extends Error {
   }
 }
 
+const HEADER = 'X-Mantel-Parent'
+
+/** The token of the open session, or null. Module state: one kiosk, one parent. */
+let held: string | null = null
+
+/** The request with the session header on it, when there is a session. */
+function withSession(init: RequestInit): RequestInit {
+  if (held === null) {
+    return init
+  }
+  return { ...init, headers: { ...(init.headers as Record<string, string> | undefined), [HEADER]: held } }
+}
+
 async function send<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(path, { ...init, credentials: 'same-origin' })
+  const response = await fetch(path, { ...withSession(init), credentials: 'same-origin' })
+  if (response.status === 401) {
+    // The session is over (ten minutes, or a restart): the token is no use now.
+    held = null
+  }
   if (!response.ok) {
     const detail = await response
       .json()
@@ -67,6 +87,7 @@ async function send<T>(path: string, init: RequestInit): Promise<T> {
 export async function sessionLeft(): Promise<number> {
   try {
     const response = await fetch('/api/parent/session', {
+      ...withSession({}),
       credentials: 'same-origin',
       cache: 'no-store',
     })
@@ -101,6 +122,11 @@ export async function signIn(pin: string): Promise<SignIn> {
   }
 
   if (response.ok) {
+    const body = await response
+      .json()
+      .then((opened: { token?: unknown }) => opened)
+      .catch((): { token?: unknown } => ({}))
+    held = typeof body.token === 'string' && body.token ? body.token : null
     return { ok: true }
   }
   if (response.status === 503) {
@@ -130,6 +156,7 @@ export async function signIn(pin: string): Promise<SignIn> {
 export async function sessionOpen(): Promise<boolean> {
   try {
     const response = await fetch('/api/parent/session', {
+      ...withSession({}),
       credentials: 'same-origin',
       cache: 'no-store',
     })
@@ -144,7 +171,9 @@ export async function sessionOpen(): Promise<boolean> {
 }
 
 export function signOut(): Promise<unknown> {
-  return send<unknown>('/api/parent/session', json('DELETE')).catch(() => null)
+  const closing = send<unknown>('/api/parent/session', json('DELETE')).catch(() => null)
+  held = null
+  return closing
 }
 
 export function getSettings(): Promise<ParentSettings> {

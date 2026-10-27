@@ -1,7 +1,13 @@
-"""Parent mode: a PIN, a short-lived cookie, and a lockout.
+"""Parent mode: a PIN, a short-lived session, and a lockout.
 
 The PIN lives in MANTEL_PARENT_PIN and is read per request, so changing it takes
 a restart of nothing. The kiosk never sees it, stores it, or compares it.
+
+The session is a random token. The browser gets it as a cookie, and since 0.3.2
+the sign-in answer carries it too, for the kiosk to send back in a header: a
+kiosk framed by Turing Machine from another address is a third party to Safari,
+which then drops our cookie, and a parent who typed the right PIN was told so
+and still shut out of every parent route.
 """
 
 from __future__ import annotations
@@ -14,6 +20,8 @@ from dataclasses import dataclass, field
 logger = logging.getLogger("mantel_api.parent")
 
 COOKIE_NAME = "mantel_parent"
+#: The same token, sent by the kiosk itself (held in memory for the session).
+HEADER_NAME = "x-mantel-parent"
 SESSION_SECONDS = 10 * 60
 #: An action inside the last minute of a session buys another ten: a parent
 #: halfway through the meals is not thrown out for being thorough.

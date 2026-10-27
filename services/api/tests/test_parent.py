@@ -288,3 +288,46 @@ class TestWritingMeals:
             "breakfast": {"name": "Poha"},
             "dinner": {"name": "Khichdi", "note": "light"},
         }
+
+
+class TestTheHeader:
+    """0.3.2: the token also travels in a header, for a kiosk whose cookie the
+    browser drops (Mantel framed by Turing Machine from another address)."""
+
+    def test_sign_in_hands_the_token_over(self, client: TestClient) -> None:
+        body = client.post("/api/parent/session", json={"pin": PIN}).json()
+
+        assert body["expires_in"] == SESSION_SECONDS
+        assert isinstance(body["token"], str) and len(body["token"]) > 20
+
+    def test_the_header_opens_every_parent_route_without_the_cookie(
+        self, client: TestClient
+    ) -> None:
+        token = client.post("/api/parent/session", json={"pin": PIN}).json()["token"]
+        client.cookies.clear()
+        assert client.get("/api/parent/settings").status_code == 401
+
+        headers = {"X-Mantel-Parent": token}
+        for method, path in PARENT_ROUTES:
+            call = getattr(client, method)
+            response = (
+                call(path, headers=headers)
+                if method == "get"
+                else call(path, json={"days": []}, headers=headers)
+            )
+            assert response.status_code != 401, f"{method} {path}"
+        session = client.get("/api/parent/session", headers=headers).json()
+        assert session["open"] is True
+
+    def test_a_made_up_header_is_refused(self, client: TestClient) -> None:
+        response = client.get("/api/parent/settings", headers={"X-Mantel-Parent": "nope"})
+        assert response.status_code == 401
+
+    def test_done_with_the_header_closes_the_session(self, client: TestClient) -> None:
+        token = client.post("/api/parent/session", json={"pin": PIN}).json()["token"]
+        client.cookies.clear()
+        headers = {"X-Mantel-Parent": token}
+        assert client.get("/api/parent/settings", headers=headers).status_code == 200
+
+        client.delete("/api/parent/session", headers=headers)
+        assert client.get("/api/parent/settings", headers=headers).status_code == 401
